@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - memorytest.info - memorytest1/wintolinux.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">memorytest1</a> - wintolinux.c<span style="font-size: 80%;"> (source / <a href="wintolinux.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">memorytest.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">32</td>
+            <td class="headerCovTableEntry">34</td>
+            <td class="headerCovTableEntryHi">94.1 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-03-11 19:38:01</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include&quot;wintolinux.h&quot;</a>
+<span class="lineNum">       2 </span>            : #ifndef WIN32
+<span class="lineNum">       3 </span>            : extern pthread_t pid;
+<a name="4"><span class="lineNum">       4 </span>            : #endif</a>
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span><span class="lineCov">      22018 : void Cond_Wait(Cond* cond, Mutex* mutex)</span>
+<span class="lineNum">       7 </span>            : {
+<span class="lineNum">       8 </span>            : #ifdef WIN32
+<span class="lineNum">       9 </span>            :         SleepConditionVariableCS(cond, mutex, INFINITE);//�ȴ�����д�߳�д��
+<span class="lineNum">      10 </span>            : #else
+<span class="lineNum">      11 </span><span class="lineCov">      22018 :         pthread_cond_wait(cond, mutex);</span>
+<span class="lineNum">      12 </span>            : #endif
+<a name="13"><span class="lineNum">      13 </span><span class="lineCov">      21988 : }</span></a>
+<span class="lineNum">      14 </span>            : 
+<span class="lineNum">      15 </span><span class="lineCov">      19139 : void Cond_Signal(Cond* cond)</span>
+<span class="lineNum">      16 </span>            : {
+<span class="lineNum">      17 </span>            : #ifdef WIN32
+<span class="lineNum">      18 </span>            :         WakeConditionVariable(cond);
+<span class="lineNum">      19 </span>            : #else
+<span class="lineNum">      20 </span><span class="lineCov">      19139 :         pthread_cond_signal(cond);</span>
+<span class="lineNum">      21 </span>            : #endif
+<a name="22"><span class="lineNum">      22 </span><span class="lineCov">      19139 : }</span></a>
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span><span class="lineCov">        604 : void Cond_SignalAll(Cond* cond)</span>
+<span class="lineNum">      25 </span>            : {
+<span class="lineNum">      26 </span>            : #ifdef WIN32
+<span class="lineNum">      27 </span>            :         WakeAllConditionVariable(cond);//֪ͨ�����߳�
+<span class="lineNum">      28 </span>            : #else
+<span class="lineNum">      29 </span><span class="lineCov">        604 :         pthread_cond_broadcast(cond);//֪ͨ�����߳�</span>
+<span class="lineNum">      30 </span>            : #endif
+<a name="31"><span class="lineNum">      31 </span><span class="lineCov">        604 : }</span></a>
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span><span class="lineCov">      56465 : void Mutexunlock(Mutex* mutex)</span>
+<span class="lineNum">      34 </span>            : {
+<span class="lineNum">      35 </span>            : #ifdef WIN32
+<span class="lineNum">      36 </span>            :         LeaveCriticalSection(mutex);
+<span class="lineNum">      37 </span>            : #else
+<span class="lineNum">      38 </span><span class="lineCov">      56465 :         pthread_mutex_unlock(mutex);</span>
+<span class="lineNum">      39 </span>            : #endif
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">      56449 : }</span></a>
+<span class="lineNum">      41 </span>            : 
+<span class="lineNum">      42 </span><span class="lineCov">      56520 : void Mutexlock(Mutex* mutex)</span>
+<span class="lineNum">      43 </span>            : {
+<span class="lineNum">      44 </span>            : #ifdef WIN32
+<span class="lineNum">      45 </span>            :         EnterCriticalSection(mutex);
+<span class="lineNum">      46 </span>            : #else
+<span class="lineNum">      47 </span><span class="lineCov">      56520 :         pthread_mutex_lock(mutex); </span>
+<span class="lineNum">      48 </span>            : #endif
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">      56501 : }</span></a>
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span><span class="lineCov">         54 : void Mutex_Init(Mutex* mutex)</span>
+<span class="lineNum">      52 </span>            : {
+<span class="lineNum">      53 </span>            : #ifdef WIN32
+<span class="lineNum">      54 </span>            :         InitializeCriticalSection(mutex);
+<span class="lineNum">      55 </span>            : #else
+<span class="lineNum">      56 </span><span class="lineCov">         54 :         pthread_mutex_init(mutex, NULL);</span>
+<span class="lineNum">      57 </span>            : #endif
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">         54 : }</span></a>
+<span class="lineNum">      59 </span>            : 
+<span class="lineNum">      60 </span><span class="lineCov">         45 : void Cond_Init(Cond* cond)</span>
+<span class="lineNum">      61 </span>            : {
+<span class="lineNum">      62 </span>            : #ifdef WIN32
+<span class="lineNum">      63 </span>            :         InitializeConditionVariable(cond);
+<span class="lineNum">      64 </span>            : #else
+<span class="lineNum">      65 </span><span class="lineCov">         45 :         pthread_cond_init(cond,NULL);</span>
+<span class="lineNum">      66 </span>            : #endif
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">         45 : }</span></a>
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span><span class="lineCov">         46 : int Pthread_create(Thread_func thread_func)</span>
+<span class="lineNum">      70 </span>            : {
+<span class="lineNum">      71 </span>            : #ifndef WIN32
+<span class="lineNum">      72 </span><span class="lineCov">         46 :         pthread_create(&amp;pid, NULL, thread_func, NULL);//���������߳�</span>
+<span class="lineNum">      73 </span>            : #else
+<span class="lineNum">      74 </span>            :         _beginthread(thread_func, 0, NULL);
+<span class="lineNum">      75 </span>            : #endif
+<span class="lineNum">      76 </span><span class="lineCov">         46 :         return 0;</span>
+<a name="77"><span class="lineNum">      77 </span>            : }</a>
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span><span class="lineCov">          9 : int Open_trunc(char* filename,int openD,int *fd)</span>
+<span class="lineNum">      80 </span>            : {
+<span class="lineNum">      81 </span>            : #ifndef WIN32
+<span class="lineNum">      82 </span><span class="lineCov">          9 :         if (!openD)//open in O_TRUNC</span>
+<span class="lineNum">      83 </span><span class="lineNoCov">          0 :                 *fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0666);//���ļ�</span>
+<span class="lineNum">      84 </span>            :         else
+<span class="lineNum">      85 </span><span class="lineCov">          9 :                 *fd = open(filename, O_RDWR | O_DIRECT | O_CREAT | O_TRUNC, 0666);</span>
+<span class="lineNum">      86 </span>            :         //ֱ��IO��Linux����Ӧ�ó�����ִ�д���IOʱ�ƹ����������ٻ��棬
+<span class="lineNum">      87 </span>            :         //���û��ռ�ֱ�ӽ����ݴ��ݵ��ļ�������豸����Ϊֱ��IO��direct IO��������IO��raw IO����
+<span class="lineNum">      88 </span>            : #else
+<span class="lineNum">      89 </span>            :         if (!openD)//open in O_TRUNC
+<span class="lineNum">      90 </span>            :                 *fd = open(filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);//���ļ�
+<span class="lineNum">      91 </span>            :         else
+<span class="lineNum">      92 </span>            :                 *fd = open(filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0666);
+<span class="lineNum">      93 </span>            : #endif
+<span class="lineNum">      94 </span><span class="lineCov">          9 :         return *fd;</span>
+<a name="95"><span class="lineNum">      95 </span>            : }</a>
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span><span class="lineCov">          9 : int Open(char* filename, int openD, int* fd)</span>
+<span class="lineNum">      98 </span>            : {
+<span class="lineNum">      99 </span>            : #ifndef WIN32
+<span class="lineNum">     100 </span><span class="lineCov">          9 :         if (!openD)</span>
+<span class="lineNum">     101 </span><span class="lineNoCov">          0 :                 *fd = open(filename, O_RDWR | O_CREAT, 0666);//���ļ�</span>
+<span class="lineNum">     102 </span>            :         else
+<span class="lineNum">     103 </span><span class="lineCov">          9 :                 *fd = open(filename, O_RDWR | O_DIRECT | O_CREAT, 0666);</span>
+<span class="lineNum">     104 </span>            :         //ֱ��IO��Linux����Ӧ�ó�����ִ�д���IOʱ�ƹ����������ٻ��棬
+<span class="lineNum">     105 </span>            :         //���û��ռ�ֱ�ӽ����ݴ��ݵ��ļ�������豸����Ϊֱ��IO��direct IO��������IO��raw IO����
+<span class="lineNum">     106 </span>            : #else
+<span class="lineNum">     107 </span>            :         if (!openD)
+<span class="lineNum">     108 </span>            :                 *fd = open(filename, O_RDWR | O_CREAT | O_BINARY, 0666);//���ļ�
+<span class="lineNum">     109 </span>            :         else
+<span class="lineNum">     110 </span>            :                 *fd = open(filename, O_RDWR | O_CREAT | O_BINARY, 0666);
+<span class="lineNum">     111 </span>            : #endif
+<span class="lineNum">     112 </span><span class="lineCov">          9 :         return *fd;</span>
+<span class="lineNum">     113 </span>            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

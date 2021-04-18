@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - memorytest.info - memorytest1/buf_write_num.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">memorytest1</a> - buf_write_num.c<span style="font-size: 80%;"> (source / <a href="buf_write_num.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">memorytest.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">23</td>
+            <td class="headerCovTableEntry">23</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-03-11 19:39:09</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include&quot;buf_write_num.h&quot;</a>
+<span class="lineNum">       2 </span>            : /**
+<span class="lineNum">       3 </span>            :  * 程序功能：存储系统一致性检验
+<span class="lineNum">       4 </span>            :  * 本文件：存放api函数，可用于单元测试
+<span class="lineNum">       5 </span>            :  * 时间：2021年3月9日20点41分
+<a name="6"><span class="lineNum">       6 </span>            : **/ </a>
+<span class="lineNum">       7 </span>            : //将num数字按int写到buf中，参数：随机数、缓冲区、大小，无返回值
+<span class="lineNum">       8 </span><span class="lineCov">         10 : int buf_write_num(int xtemp, char* tmpptr, int blocksize,int sector_size)</span>
+<span class="lineNum">       9 </span>            : {
+<span class="lineNum">      10 </span><span class="lineCov">         10 :         if(tmpptr==NULL||blocksize==0)</span>
+<span class="lineNum">      11 </span>            :         {
+<span class="lineNum">      12 </span><span class="lineCov">          2 :                 printf(&quot;tmpptr is NULL\n&quot;);</span>
+<span class="lineNum">      13 </span><span class="lineCov">          2 :                 return 0;</span>
+<span class="lineNum">      14 </span>            :         }
+<span class="lineNum">      15 </span><span class="lineCov">          8 :         if(blocksize%sector_size!=0)</span>
+<span class="lineNum">      16 </span>            :         {
+<span class="lineNum">      17 </span><span class="lineCov">          1 :                 printf(&quot;blocksize %% %d!=0\n,&quot;,sector_size);</span>
+<span class="lineNum">      18 </span><span class="lineCov">          1 :                 return 0;</span>
+<span class="lineNum">      19 </span>            :         }
+<span class="lineNum">      20 </span><span class="lineCov">          7 :         int int_size=sizeof(int);</span>
+<span class="lineNum">      21 </span><span class="lineCov">          7 :         int m = blocksize,z=0;</span>
+<span class="lineNum">      22 </span><span class="lineCov">         83 :         while (m != 1)//判断数字是否是2的n次</span>
+<span class="lineNum">      23 </span>            :         {
+<span class="lineNum">      24 </span><span class="lineCov">         71 :                 if (m % 2 != 0)</span>
+<span class="lineNum">      25 </span>            :                 {
+<span class="lineNum">      26 </span><span class="lineCov">          2 :                         z = 1;</span>
+<span class="lineNum">      27 </span><span class="lineCov">          2 :                         break;</span>
+<span class="lineNum">      28 </span>            :                 }
+<span class="lineNum">      29 </span><span class="lineCov">         69 :                 m = m / 2;</span>
+<span class="lineNum">      30 </span>            :         }
+<span class="lineNum">      31 </span><span class="lineCov">          7 :         memcpy(tmpptr, &amp;xtemp, int_size);//赋值一个数</span>
+<span class="lineNum">      32 </span><span class="lineCov">          7 :         if (z == 1)//例如512*6</span>
+<span class="lineNum">      33 </span>            :         {
+<span class="lineNum">      34 </span><span class="lineCov">         16 :                 for (int j = int_size; j &lt; sector_size; j *= 2)//赋值一个扇区</span>
+<span class="lineNum">      35 </span>            :                 {
+<span class="lineNum">      36 </span><span class="lineCov">         14 :                         memcpy(tmpptr + j, tmpptr, j);</span>
+<span class="lineNum">      37 </span>            :                 }
+<span class="lineNum">      38 </span><span class="lineCov">          6 :                 for (int j = 1; j &lt; blocksize / sector_size; j++)//赋值一个块</span>
+<span class="lineNum">      39 </span>            :                 {
+<span class="lineNum">      40 </span><span class="lineCov">          4 :                         memcpy(tmpptr + j * sector_size, tmpptr, sector_size);</span>
+<span class="lineNum">      41 </span>            :                 }
+<span class="lineNum">      42 </span>            :         }
+<span class="lineNum">      43 </span>            :         else//4096
+<span class="lineNum">      44 </span>            :         {
+<span class="lineNum">      45 </span><span class="lineCov">         46 :                 for (int i = int_size; i &lt; blocksize; i *= 2)</span>
+<span class="lineNum">      46 </span><span class="lineCov">         41 :                         memcpy(tmpptr + i, tmpptr, i);//写前4k内容，乘法增长2 4 8 16 32</span>
+<span class="lineNum">      47 </span>            :         }
+<span class="lineNum">      48 </span><span class="lineCov">          7 :         return 1;</span>
+<span class="lineNum">      49 </span>            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
