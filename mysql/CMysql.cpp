@@ -62,7 +62,7 @@ bool CMysql::init(const std::string& host, const std::string& user, const std::s
     return false;
 }
 
-//TODO: Õâ¸öº¯ÊýÒªÇø·ÖÒ»ÏÂ¿ÕÊý¾Ý¼¯ºÍ³ö´íÁ½ÖÖÇé¿ö
+//TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ò»ï¿½Â¿ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½Í³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 QueryResult* CMysql::query(const char* sql)
 {
     if (!m_Mysql)
@@ -88,7 +88,7 @@ QueryResult* CMysql::query(const char* sql)
         {
             unsigned int uErrno = mysql_errno(m_Mysql);
             //LOGI << "CMysql::Query, mysql is abnormal, errno : " << uErrno;
-            if (CR_SERVER_GONE_ERROR == uErrno)
+            if (CR_AUTH_PLUGIN_ERROR == uErrno)
             {
                 //LOGI << "CMysql::Query, mysql is disconnected!";
                 if (false == init(strHost, strUser,strPwd,strDBName))
@@ -147,7 +147,7 @@ bool CMysql::execute(const char* sql)
         {
             unsigned int uErrno = mysql_errno(m_Mysql);
             //LOGI << "CMysql::Query, mysql is abnormal, errno : " << uErrno;
-            if (CR_SERVER_GONE_ERROR == uErrno)
+            if (CR_AUTH_PLUGIN_ERROR == uErrno)
             {
                 //LOGI << "CMysql::Query, mysql is disconnected!";
                 if (false == init(strHost,strUser,strPwd,strDBName))
@@ -186,7 +186,7 @@ bool CMysql::execute(const char* sql, uint32_t& uAffectedCount, int& nErrno)
         {
             unsigned int uErrno = mysql_errno(m_Mysql);
             //LOGE << "CMysql::Query, mysql is abnormal, errno : " << uErrno;
-            if (CR_SERVER_GONE_ERROR == uErrno)
+            if (CR_AUTH_PLUGIN_ERROR == uErrno)
             {
                 //LOGE << "CMysql::Query, mysql is disconnected!";
                 if (false == init(strHost,strUser,strPwd,strDBName))
@@ -235,10 +235,10 @@ void CMysql::clearStoredResults()
 uint32_t CMysql::getInsertID()
 {
     return (uint32_t)mysql_insert_id(m_Mysql);
-    //º¯Êý·µ»ØÉÏÒ»²½ INSERT ²Ù×÷²úÉúµÄ ID
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ INSERT ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ID
 }
 
-//º¯Êý×ªÒå SQL Óï¾äÖÐÊ¹ÓÃµÄ×Ö·û´®ÖÐµÄÌØÊâ×Ö·û¡£ ÏÂÁÐ×Ö·ûÊÜÓ°Ïì: Èç¹û³É¹¦,Ôò¸Ãº¯Êý·µ»Ø±»×ªÒåµÄ×Ö·û´®¡£Èç¹ûÊ§°Ü,Ôò·µ»Ø false¡£
+//ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ SQL ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ãµï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ó°ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½É¹ï¿½,ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±ï¿½×ªï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½,ï¿½ò·µ»ï¿½ falseï¿½ï¿½
 int32_t CMysql::escapeString(char* szDst, const char* szSrc, uint32_t uSize)
 {
     if (m_Mysql == NULL)
@@ -278,7 +278,7 @@ MYSQL_RES* CMysql::query(const char* sql,int k)
         {
             unsigned int uErrno = mysql_errno(m_Mysql);
             //LOGI << "CMysql::Query, mysql is abnormal, errno : " << uErrno;
-            if (CR_SERVER_GONE_ERROR == uErrno)
+            if (CR_AUTH_PLUGIN_ERROR == uErrno)
             {
                 //LOGI << "CMysql::Query, mysql is disconnected!";
                 if (false == init(strHost, strUser, strPwd, strDBName))

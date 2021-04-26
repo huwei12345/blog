@@ -4,11 +4,11 @@
 #include <map>
 #include <vector>
 
-#include "../mysqlapi/CMysql.h"
+#include "./mysql/CMysql.h"
 
 #define MAXCMDLEN 8192
 
-struct STableField//±íÖÐµÄÁÐ
+struct STableField//ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½
 {
 	STableField() {}
 	STableField(std::string strName, std::string strType, std::string strIndex) :
@@ -22,7 +22,7 @@ struct STableField//±íÖÐµÄÁÐ
 	std::string m_strDesc;
 };
 
-struct STableInfo//±í
+struct STableInfo//ï¿½ï¿½
 {
 	STableInfo() {}
 	STableInfo(std::string strName):m_strName(strName){}
@@ -55,7 +55,7 @@ private:
 	//bool updateTable(const STableInfo& table);
 
 protected:
-	std::shared_ptr<CMysql>     m_poConn;//Êý¾Ý¿âÁ¬½ÓÖ¸Õë
+	std::shared_ptr<CMysql>     m_poConn;//ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
 
 	std::string                         m_strHost;
 	std::string                         m_strUser;

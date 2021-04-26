@@ -1,79 +1,57 @@
-#include "./mysql/CMysql.h"
 #include "MysqlManager.h"
-
+#include "mysqlpool.h"
 //除了多一个搜索用户信息的是用账号密码，其他都是增删改查用id搜索
 //当增 改的时候需要整个结构体传入，并根据结构体修改数据库
 //当删除的时候和查找的时候，删除只需传入几个参数，查找需要返回结构体
 
 //数据库操作（非Get）返回结果
-enum Result
+//插入 删除 修改的结果 1 -1 0
+
+std::shared_ptr<CMysql>* mysqlpool;
+int *mysqlqueue=NULL;
+void mysql_init()
 {
-    //插入 删除 修改的结果 1 -1 0
-    SUCCESS=0,FAILURE,Permisson_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR;
-};
-//用户信息
-struct User
+    int n=10;
+    string host("localhost");
+    string user("root");
+    string pwd("123456");
+    string dbName("blog");
+    //CMysqlManager mgr;
+    //if (mgr.init(host.c_str(), user.c_str(), pwd.c_str(), dbName.c_str()) == false)
+    //    return;    
+    mysqlpool = new std::shared_ptr<CMysql>[n];
+    mysqlqueue=new int[n];
+    for(int i=0;i<n;i++)
+    {
+        mysqlpool[i]=static_cast<std::shared_ptr<CMysql>>(new CMysql());
+        mysqlpool[i]->init(host,user,pwd,dbName);
+        mysqlqueue[i]=0;
+    }
+}
+
+CMysql* get_mysql_handler()
 {
-    unsigned int user_id;//用户id
-    char* name;//昵称
-    char* address;//地址
-    char* sex;//性别
-    char* create_time;//创建日期
-    unsigned int fans_num;//粉丝数
-    unsigned int article_num;//文章数
-    char* account;//账号
-    char* password;//密码
-};
-//用户关系
-struct User_Relation
-{
-    unsigned int user_id;//关注者id
-    unsigned int rel_user_id;//被关注者id
-};
-//文章分组
-struct Group
-{
-    unsigned int user_id;//每个用户都有分组
-    unsigned int group_id;//组id
-    unsigned int father_group_id;//本组的父组节点
-};
-//文章
-struct Article
-{
-    unsigned int art_id;//文章id
-    unsigned int user_id;//用户id
-    char* title;//文章名
-    char* text;//文章内容
-    unsigned int upvote_num;//点赞数
-    char* create_time;//创建时间
-    char* modify_time;//最后修改时间
-    unsigned int group_id;//属于分组
-};
-//评论
-struct Comment
-{
-    unsigned int comment_id;//评论id
-    unsigned int art_id;//文章id
-    unsigned int com_user_id;//评论者的id
-    char* text;//评论内容
-    unsigned int upvote_num;//评论获赞数
-    unsigned int is_question;//回复是否针对问题
-};
-//收藏
-struct Collect
-{
-    unsigned int user_id;//用户id
-    unsigned int collect_art_id;//被收藏文章/问题id
-    unsigned int collect_num;//收藏顺序
-};
+    //阻塞获取
+    int n=10;
+    for(int i=0;i<n;i++)
+    {
+        if(mysqlqueue[i]==0)
+        {
+            mysqlqueue[i]=1;
+            return mysqlpool[i].get();
+        }
+    }
+    return NULL;
+}
+
 Result insert_user(struct User *p)
 {
     char* str = new char[100];
 	snprintf(str, 100, "insert into users_t(name,address,sex,create_time,fans_num,article_num,account,password) values");
     snprintf(str, 200, "%s('%s','%s','%s','%s',%d,%d,'%s','%s');", str, p->name, p->address
 		, p->sex, p->create_time, p->fans_num,p->article_num, p->account, p->password);
-	Mysql* m_mysql=get_mysql_handler();
-    if(mysql==NULL)
+	CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if (m_mysql->execute(str)==false)//插入数据,已经有了
 	{
@@ -87,10 +65,10 @@ Result insert_user(struct User *p)
 Result insert_user_rel(struct User_Relation *user_relation)
 {
     char* str = new char[100];
-	sprintf_s(str, 100, "insert into users_rel_t(user_id,rel_user_id) values(");
-    sprintf_s(str, 100, "%s(%d,%d);", str, user_relation->user_id, user_relation->rel_user_id);
-    Mysql* m_mysql=get_mysql_handler();
-    if(mysql==NULL)
+	snprintf(str, 100, "insert into users_rel_t(user_id,rel_user_id) values(");
+    snprintf(str, 100, "%s(%d,%d);", str, user_relation->user_id, user_relation->rel_user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
 	if (m_mysql->execute(str)==false)//插入数据,已经有了
 	{
@@ -118,12 +96,12 @@ Result insert_collect(struct Collect *collect)
 }
 User* query_my_user(char* account,char* password)
 {
-    QueryResult* res=new QueryResult;
+    
+    QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[100];
-    char* str="select user_id,name,address,sex,create_time,fans_num,article_num from user_t where ";
-    snprintf(str,200,"%s account=%s,password=%s;",str,account,password);//...
-    Mysql* mysql=get_mysql_handler();
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where account='%s' and password='%s';",account,password);
+    CMysql* mysql=get_mysql_handler();
     if(mysql==NULL)
         return NULL;
     res=mysql->query(str);
@@ -135,14 +113,21 @@ User* query_my_user(char* account,char* password)
         //只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
 		if (pRow == NULL)
-			return false;
+			return NULL;
 		user->user_id=pRow[0].getInt32();
-		user->name = pRow[1].getString();
-		user->address = pRow[2].getString();
-		user->sex = pRow[3].getString();
-		user->create_time = pRow[4].getString();
-		user->fans_num=pRow[5].getString();
-		user->article_num = pRow[6].getString();
+		user->name = const_cast<char*>(pRow[1].getString().c_str());;
+		printf("naem =%s \n",user->name);
+        user->address = const_cast<char*>(pRow[2].getString().c_str());
+        printf("naem =%s \n",user->address);
+		user->sex = const_cast<char*>(pRow[3].getString().c_str());
+		printf("naem =%s \n",user->sex);
+        user->create_time = const_cast<char*>(pRow[4].getString().c_str());
+		printf("naem =%s \n",user->create_time);
+        user->fans_num=pRow[5].getInt32();
+        printf("naem =%d \n",user->fans_num);
+		user->article_num = pRow[6].getInt32();
+        printf("naem =%d \n",user->article_num);
+        printf("%d %s %s %s %s %d %d\n",user->user_id,user->name,user->address,user->sex,user->create_time,user->fans_num,user->article_num);
 	    res->endQuery();
         delete res;
         return user;
@@ -182,17 +167,17 @@ Result modify_user(struct User *user)
 {
     char* str = new char[100];
     int flag=1;//用于','的使用
-	sprintf_s(str, 100, "update user_t set");
+	snprintf(str, 100, "update user_t set");
     if(user->name!=NULL)
-        sprintf_s(str, 100,"%s name=%s", str, user->name);
+        snprintf(str, 100,"%s name=%s", str, user->name);
 	if(user->sex!=NULL)
-        spinrtf_s(str,100,"%s,sex=%s",str,user->sex);
+        snprintf(str,100,"%s,sex=%s",str,user->sex);
     if(user->address!=NULL)
-        spinrtf_s(str,100,"%s,address=%s",str,user->address);
+        snprintf(str,100,"%s,address=%s",str,user->address);
     if(user->password!=NULL)
-        sprintf_s(str,100,"%s,password=%s",str,user->password);
-    Mysql* m_mysql=get_mysql_handler();
-    if(mysql==NULL)
+        snprintf(str,100,"%s,password=%s",str,user->password);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if (m_mysql->execute(str)==false)//插入数据,已经有了
 	{
@@ -226,10 +211,10 @@ Result delete_user(int user_id)
 {
     char* str = new char[100];
     int flag=1;//用于','的使用
-	sprintf_s(str, 100, "delete from user_t where");
-    sprintf_s(str,100,"%s user_id=%d",str,user_id);
-    Mysql* m_mysql=get_mysql_handler();
-    if(mysql==NULL)
+	snprintf(str, 100, "delete from user_t where");
+    snprintf(str,100,"%s user_id=%d",str,user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if (m_mysql->execute(str)==false)//插入数据,已经有了
 	{
@@ -278,10 +263,4 @@ Result delete_collect(int user_id,int art_id)
 Result delete_collect_all(int user_id)
 {
     //删除个人所有收藏
-}
-
-test()
-{
-    res=insert_user();
-    res->
 }

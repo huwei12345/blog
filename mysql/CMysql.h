@@ -1,13 +1,12 @@
-//mysql连接池
+//mysql锟斤拷锟接筹拷
 //#pragma once
 #ifndef CMYSQL_DEFINE
 #define CMYSQL_DEFINE
-#include <winsock.h>//注意这两个头文件的次序不能放错
 #include "mysql.h"
 #include"QueryResult.h"
 #include<iostream>
-#pragma comment(lib,"libmysql.lib")
-class CMysql//mysql类
+#include<string.h>
+class CMysql//mysql锟斤拷
 {
 private:
 	MYSQL* m_Mysql;
@@ -16,7 +15,7 @@ private:
 	std::string strUser;
 	std::string strPwd;
 	std::string strDBName;
-	//连接
+	//锟斤拷锟斤拷
 public:
 	
 	CMysql(void);

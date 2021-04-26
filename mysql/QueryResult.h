@@ -1,4 +1,5 @@
-#pragma once
+#ifndef QUERYRESULT_H
+#define QUERYRESULT_H
 #include "mysql.h"
 #include <stdint.h>
 #include<iostream>
@@ -6,7 +7,7 @@
 #include <map>
 
 #include "Field.h"
-class QueryResult//·µ»Ø½á¹ûÀà
+class QueryResult//ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½
 {
 public:
     typedef std::map<uint32_t, std::string> FieldNames;
@@ -15,7 +16,7 @@ public:
 
     virtual bool nextRow();
 
-    uint32_t getField_idx(const std::string& name) const//¸ù¾ÝÃû×Ö»ñÈ¡ÊÇµÚ¼¸ÁÐ
+    uint32_t getField_idx(const std::string& name) const//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½È¡ï¿½ÇµÚ¼ï¿½ï¿½ï¿½
     {
         for (FieldNames::const_iterator iter = getFieldNames().begin(); iter != getFieldNames().end(); ++iter)
         {
@@ -26,7 +27,7 @@ public:
         //assert(false && "unknown field name");
         return uint32_t(-1);
     }
-    Field* fetch() const { return m_CurrentRow; }//µ±Ç°ÐÐµÄÁÐ
+    Field* fetch() const { return m_CurrentRow; }//ï¿½ï¿½Ç°ï¿½Ðµï¿½ï¿½ï¿½
 
     const Field& operator [] (int index) const
     {
@@ -52,10 +53,11 @@ protected:
     Field* m_CurrentRow;
     uint32_t                    m_FieldCount;
     uint64_t                    m_RowCount;
-    FieldNames                  m_FieldNames;//map µÚ¼¸ÁÐÊÇÊ²Ã´Ãû
+    FieldNames                  m_FieldNames;//map ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½Ê²Ã´ï¿½ï¿½
     std::vector<std::string>    m_vtFieldNames;
 
     MYSQL_RES* m_Result;
 
 
 };
+#endif
