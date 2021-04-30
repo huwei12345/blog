@@ -1,16 +1,16 @@
 #include "MysqlManager.h"
 #include <sstream>
 //#include "MysqlThrdMgr.h"
-
+//ä¸å¤ªéœ€è¦ï¼Œè¡¨å¤ªå¤šäº†ï¼Œè¦åˆ›å»ºå¾ˆå¤šå¼ è¡¨ï¼Œæš‚æ—¶ä¸ç”¨
 CMysqlManager::CMysqlManager(void)
 {
-	//TODO: m_strCharactSet¿ÉÒÔ·ÅÔÚ³õÊ¼»¯ÁÐ±íÖÐ³õÊ¼»¯
+	//TODO: m_strCharactSetï¿½ï¿½ï¿½Ô·ï¿½ï¿½Ú³ï¿½Ê¼ï¿½ï¿½ï¿½Ð±ï¿½ï¿½Ð³ï¿½Ê¼ï¿½ï¿½
     m_strCharactSet = "utf8";
-	// ³õÊ¼»¯±í 
+	// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ 
 	// 1. t_user 
 	STableInfo info;
 	//name type desc?
-    info.m_strName = "roadinfo";//±íÃû;
+    info.m_strName = "blog";//ï¿½ï¿½ï¿½ï¿½;
     info.m_mapField["LinkID"] = { "LinkID", "INT NOT NULL  COMMENT 'LinkID'", "INT" };
 	info.m_mapField["record_size"] = { "record_size", " SMALLINT UNSIGNED NOT NULL COMMENT 'recore length'", "SMALLINT" };
 	info.m_mapField["roadsize"] = { "roadsize", " SMALLINT UNSIGNED NOT NULL  COMMENT 'roadsize'", "SMALLINT" };
@@ -21,19 +21,19 @@ CMysqlManager::CMysqlManager(void)
     info.m_mapField["name"] = { "name", "varchar(40) character set gbk collate gbk_chinese_ci NOT NULL COMMENT 'name'", "nvarchar(40)" };
   
     info.m_strKeyString = "PRIMARY KEY (LinkID), INDEX LinkID (LinkID)";
-    m_vecTableInfo.push_back(info);//Ö»ÓÐÒ»¸ö±í
+    m_vecTableInfo.push_back(info);//Ö»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½
 }
 
 bool CMysqlManager::init(const char* host, const char* user, const char* pwd, const char* dbname)
 {
 	m_strHost = host;
 	m_strUser = user;
-	//Êý¾Ý¿âÃÜÂë¿ÉÄÜÎª¿Õ
+	//ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
 	if (pwd != NULL)
 		m_strPassword = pwd;
 	m_strDataBase = dbname;
 
-	//×¢Òâ£º¼ì²éÊý¾Ý¿âÊÇ·ñ´æÔÚÊ±£¬ÐèÒª½«Êý¾Ý¿âÃû³ÆÉèÖÃÎª¿Õ
+	//×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
 	m_poConn.reset(new CMysql());
 	if (!m_poConn->init(m_strHost, m_strUser, m_strPassword, ""))
 	{
@@ -41,7 +41,7 @@ bool CMysqlManager::init(const char* host, const char* user, const char* pwd, co
 		return false;
 	}
 
-	////////////////////// 1. ¼ì²é¿âÊÇ·ñ´æÔÚ /////////////////////////
+	////////////////////// 1. ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ /////////////////////////
 	if (!isDBExist())
 	{
 		if (!createDB())
@@ -50,7 +50,7 @@ bool CMysqlManager::init(const char* host, const char* user, const char* pwd, co
 		}
 	}
 
-	//ÔÙ´ÎÈ·¶¨ÊÇ·ñ¿ÉÒÔÁ¬½ÓÉÏÊý¾Ý¿â
+	//ï¿½Ù´ï¿½È·ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
 	m_poConn.reset(new CMysql());
 	if (!m_poConn->init(m_strHost, m_strUser, m_strPassword, m_strDataBase))
 	{
@@ -59,7 +59,7 @@ bool CMysqlManager::init(const char* host, const char* user, const char* pwd, co
 		return false;
 	}
 
-	////////////////////// 2. ¼ì²é¿âÖÐ±íÊÇ·ñÕýÈ· /////////////////////////
+	////////////////////// 2. ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½Ç·ï¿½ï¿½ï¿½È· /////////////////////////
 	for (size_t i = 0; i < m_vecTableInfo.size(); i++)
 	{
 		STableInfo table = m_vecTableInfo[i];
@@ -69,9 +69,9 @@ bool CMysqlManager::init(const char* host, const char* user, const char* pwd, co
 			return false;
 		}
 	}
-	////////////////////// 2. ¼ì²é¿âÖÐ±íÊÇ·ñÕýÈ· /////////////////////////
+	////////////////////// 2. ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½Ç·ï¿½ï¿½ï¿½È· /////////////////////////
 
-	m_poConn.reset();//Îö¹¹ÁËCMysql
+	m_poConn.reset();//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½CMysql
 	return true;
 }
 
@@ -162,14 +162,14 @@ bool CMysqlManager::checkTable(const STableInfo& table)
 	if (NULL == pResult)
 	{
 		//LOGI << "CMysqlManager::_CheckTable, no table" << table.m_strName << ", begin create.....";
-		if (createTable(table))//Ã»ÓÐÆ¥Åä±í
+		if (createTable(table))//Ã»ï¿½ï¿½Æ¥ï¿½ï¿½ï¿½
 		{
 			//LOGI << "CMysqlManager::_CheckTable, " << table.m_strName << ", end create.....";
 			return true;
 		}
 		return false;
 	}
-	else // ¼ì²é×Ö¶ÎÊÇ·ñÆ¥Åä£¬ ÔÝÊ±Ö»¼ì²éÊÇ·ñ´æÔÚ£¬ »¹Ðè½øÒ»²½¿´ÀàÐÍÊÇ·ñÐèÒªÐÞ¸Ä 
+	else // ï¿½ï¿½ï¿½ï¿½Ö¶ï¿½ï¿½Ç·ï¿½Æ¥ï¿½ä£¬ ï¿½ï¿½Ê±Ö»ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Ú£ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½Þ¸ï¿½ 
 	{
 		std::map<std::string, std::string> mapOldTable;
 		Field* pRow = pResult->fetch();
@@ -246,7 +246,7 @@ bool CMysqlManager::createTable(const STableInfo& table)
 	}
 
 	ss << ")default charset = utf8, ENGINE = InnoDB;";
-	//ssÓï¾ä½¨±í
+	//ssï¿½ï¿½ä½¨ï¿½ï¿½
 	if (m_poConn->execute(ss.str().c_str()))
 	{
 		return true;

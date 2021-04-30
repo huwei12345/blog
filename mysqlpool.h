@@ -29,6 +29,7 @@ struct Group
 {
     unsigned int user_id;//每个用户都有分组
     unsigned int group_id;//组id
+    char* group_name;
     unsigned int father_group_id;//本组的父组节点
 };
 //文章
