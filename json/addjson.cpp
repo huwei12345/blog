@@ -3,31 +3,46 @@
 #include<string.h>
 #include"../mysqlpool.h"
 enum type{USER=0,USER_REL,GROUP,ARTICLE,COMMENT,COLLECT};
+
+/* 
+    request -> get(query ): -> 解析request协议 -> 解析json ,调用 mysql_query()返回结构体 -> 将结构体放入json、再在json前加协议。 返回response,然后发送
+            -> set(delete、update、set):mysql_insert()、mysql_delete()、mysql_modify(),
+    
+*/
+//目前函数只支持对象，不支持对象数组，每类都需要实现数组功能
 char* struct2json(void* obj,type type);
 void* json2struct(char* json_str,type type);
+
 void test_s2j()
 {
-    User *p =new User;
-    p->name=new char[10];
-    strcpy(p->name,"robot");
-    p->address=new char[5];
-    strcpy(p->address,"NULL");
-    p->create_time=new char[20];
-    strcpy(p->create_time,"2021-04-14 01:53:56");
-    p->sex=new char[5];
-    strcpy(p->sex,"男");
-    p->article_num=0;
-    p->fans_num=0;
-    p->account=new char[5];
-    strcpy(p->account,"z123");
-    p->password=new char[5];
-    strcpy(p->password,"z123");
-    struct2json(p,USER);
+    char* str=NULL;
+
+    User *user =new User;
+    user->name=new char[10];
+    strcpy(user->name,"robot");
+    user->address=new char[5];
+    strcpy(user->address,"NULL");
+    user->create_time=new char[20];
+    strcpy(user->create_time,"2021-04-14 01:53:56");
+    user->sex=new char[5];
+    strcpy(user->sex,"男");
+    user->article_num=0;
+    user->fans_num=0;
+    user->account=new char[5];
+    strcpy(user->account,"z123");
+    user->password=new char[5];
+    strcpy(user->password,"z123");
+    str=struct2json(user,USER);
+    
+    User* p=(User*)json2struct(str,USER);
+    printf("user_id=%d,name=%s,address=%s,sex=%s,ctime=%s,art_num=%d,fans_num=%d\n",p->user_id,p->name,p->address,p->sex,p->create_time,p->article_num,p->fans_num);
+
 
     User_Relation *rel=new User_Relation;
     rel->rel_user_id=3;
     rel->user_id=2;
     struct2json(rel,USER_REL);
+
 
     Group* group=new Group;
     group->user_id=2;
@@ -35,7 +50,7 @@ void test_s2j()
     group->father_group_id=0;
     group->group_name=new char[10];
     strcpy(group->group_name,"group3");
-    struct2json(rel,GROUP);
+    str=struct2json(group,GROUP);
 
     Article* article=new Article;
     article->user_id=1;
@@ -49,7 +64,7 @@ void test_s2j()
     article->modify_time=new char[20];
     strcpy(article->modify_time,"2021-04-14 01:53:56");
     article->upvote_num=0;
-    struct2json(article,ARTICLE);
+    str=struct2json(article,ARTICLE);
 
     Comment* comment=new Comment;
     comment->comment_id=3;
@@ -59,13 +74,13 @@ void test_s2j()
     strcpy(comment->text,"xie de zhen hao");
     comment->upvote_num=0;
     comment->is_question=0;
-    struct2json(comment,COMMENT);
+    str=struct2json(comment,COMMENT);
 
     Collect* collect=new Collect;
     collect->user_id=1;
     collect->collect_art_id=3;
     collect->collect_num=1;
-    struct2json(collect,COLLECT);
+    str=struct2json(collect,COLLECT);
 }
 void test_j2s()
 {
@@ -162,7 +177,7 @@ char* struct2json(void* obj,type type)
             Comment* comment=(Comment*)obj;
             cJSON* json_obj;
             json_obj=cJSON_CreateObject();
-            cJSON_AddNumberToObject(json_obj,"user_id",comment->art_id);
+            cJSON_AddNumberToObject(json_obj,"art_id",comment->art_id);
             cJSON_AddNumberToObject(json_obj,"com_user_id",comment->com_user_id);
             cJSON_AddNumberToObject(json_obj,"comment_id",comment->comment_id);
             cJSON_AddStringToObject(json_obj,"comment_text",comment->text);
@@ -229,98 +244,74 @@ void* json2struct(char* json_str,type type)
         }
         case USER_REL:
         {
-            User *user=new User;
+            User_Relation *user_rel=new User_Relation;
             json_temp=cJSON_GetObjectItem(json,"user_id");
-            user->user_id=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"name");
-            user->name=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"address");
-            user->address=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"sex");
-            user->sex=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"create_time");
-            user->create_time=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"article_num");
-            user->article_num=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"fans_num");
-            user->fans_num=json_temp->valueint;
-            return user;
+            user_rel->user_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"rel_user_id");
+            user_rel->rel_user_id=json_temp->valueint;
+            return user_rel;
         }
         case GROUP:
         {
-            User *user=new User;
+            Group *group=new Group;
             json_temp=cJSON_GetObjectItem(json,"user_id");
-            user->user_id=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"name");
-            user->name=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"address");
-            user->address=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"sex");
-            user->sex=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"create_time");
-            user->create_time=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"article_num");
-            user->article_num=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"fans_num");
-            user->fans_num=json_temp->valueint;
-            return user;
+            group->user_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"group_id");
+            group->group_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"father_group");
+            group->father_group_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"group_name");
+            group->group_name=json_temp->valuestring;
+            return group;
         }
         case ARTICLE:
         {
-            User *user=new User;
+            Article *article=new Article;
             json_temp=cJSON_GetObjectItem(json,"user_id");
-            user->user_id=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"name");
-            user->name=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"address");
-            user->address=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"sex");
-            user->sex=json_temp->valuestring;
+            article->user_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"art_id");
+            article->art_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"title");
+            article->title=json_temp->valuestring;
+            json_temp=cJSON_GetObjectItem(json,"text");
+            article->text=json_temp->valuestring;
+            json_temp=cJSON_GetObjectItem(json,"upvote_num");
+            article->upvote_num=json_temp->valueint;
             json_temp=cJSON_GetObjectItem(json,"create_time");
-            user->create_time=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"article_num");
-            user->article_num=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"fans_num");
-            user->fans_num=json_temp->valueint;
-            return user;
+            article->create_time=json_temp->valuestring;
+            json_temp=cJSON_GetObjectItem(json,"modify_time");
+            article->modify_time=json_temp->valuestring;
+            json_temp=cJSON_GetObjectItem(json,"group_id");
+            article->group_id=json_temp->valueint;
+            return article;
         }
         case COMMENT:
         {
-            User *user=new User;
+            Comment *comment=new Comment;
             json_temp=cJSON_GetObjectItem(json,"user_id");
-            user->user_id=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"name");
-            user->name=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"address");
-            user->address=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"sex");
-            user->sex=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"create_time");
-            user->create_time=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"article_num");
-            user->article_num=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"fans_num");
-            user->fans_num=json_temp->valueint;
-            return user;
+            comment->art_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"com_user_id");
+            comment->com_user_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"comment_id");
+            comment->comment_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"comment_text");
+            comment->text=json_temp->valuestring;
+            json_temp=cJSON_GetObjectItem(json,"upvote_num");
+            comment->upvote_num=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"is_question");
+            comment->is_question=json_temp->valueint;
+            return comment;
         }
         case COLLECT:
         {
-            User *user=new User;
+            Collect *collect=new Collect;
             json_temp=cJSON_GetObjectItem(json,"user_id");
-            user->user_id=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"name");
-            user->name=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"address");
-            user->address=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"sex");
-            user->sex=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"create_time");
-            user->create_time=json_temp->valuestring;
-            json_temp=cJSON_GetObjectItem(json,"article_num");
-            user->article_num=json_temp->valueint;
-            json_temp=cJSON_GetObjectItem(json,"fans_num");
-            user->fans_num=json_temp->valueint;
-            return user;      
+            collect->user_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"collect_art_id");
+            collect->collect_art_id=json_temp->valueint;
+            json_temp=cJSON_GetObjectItem(json,"collect_num");
+            collect->collect_num=json_temp->valueint;
+            return collect;      
         }
     }
     return NULL;
