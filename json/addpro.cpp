@@ -42,10 +42,11 @@ void test()
      char* s=addprotocol("{\"user_id\":      0,\"name\": \"robot\",\"address\":      \"NULL\",\"sex\":  \"男\",\"create_time\":  \"2021-04-14 01:53:56\",\"article_num\":  0,\"fans_num\":     0}",1,1,1);
     int len=strlen(s);
     printf("len= %d\n",len);
-    for(int i=0;i<len;i++)
+    for(int i=0;i<16;i++)
     {
-        printf("%c ",s[i]);
+        printf("%d ",s[i]);
     }
+    printf("%s",s+16);
 }
 
 int main()
