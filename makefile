@@ -1,10 +1,10 @@
-memorytest:main.o mysqlpool.o Field.o QueryResult.o CMysql.o MysqlManager.o
-	g++ -Wall -g -fprofile-arcs -ftest-coverage -o main main.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o -lpthread -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+memorytest:main1.o mysqlpool.o Field.o QueryResult.o CMysql.o MysqlManager.o addjson.o
+	g++ -Wall -g -fprofile-arcs -ftest-coverage -o main1 main1.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o addjson.o cJSON.c -lpthread -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c -o test_main.o test_main.c
 	gcc -Wall -g -fprofile-arcs -ftest-coverage -c -o xtest.o xtest.c
-	g++ -Wall -g -o test xtest.o test_main.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
-main.o:
-	g++ -Wall -g -fprofile-arcs -ftest-coverage -c main.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+	g++ -Wall -g -o test xtest.o test_main.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o addjson.o cJSON.c -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+main1.o:
+	g++ -Wall -g -fprofile-arcs -ftest-coverage -c main1.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 mysqlpool.o:
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c mysqlpool.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 Field.o:
@@ -15,6 +15,8 @@ CMysql.o:
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c ./mysql/CMysql.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 MysqlManager.o:
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c MysqlManager.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+addjson.o:
+	g++ -Wall -g -fprofile-arcs -ftest-coverage -c addjson.cpp cJSON.c -lm
 clean: 
 	rm -f *.o *.gcda *.gcno *.gcov demo.info
 	rm -f *.yml
@@ -26,10 +28,10 @@ test: def
 	./test --fork
 
 check:
-	valgrind --leak-check=full -v ./main
+	valgrind --leak-check=full -v ./main1
 
 lcov:
-	lcov -d ./ -t 'main' -o 'main.info' -b . -c
-	genhtml -o main_web main.info
+	lcov -d ./ -t 'main1' -o 'main1.info' -b . -c
+	genhtml -o main1_web main1.info
 
 .PHONY: def clean ut test

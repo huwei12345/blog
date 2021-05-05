@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include"addpro.h"
 //为json内容添加协议前缀
 //最终黑盒数据
 /*
@@ -8,11 +9,12 @@
 ------------ -------------- ------------ -----------
                         长度
           状态                        操作类型
-                        用户id
                         CRC(针对json+上述4项)                        
 
 
 */
+
+
 //get_black_data,第二个参数也可以是一个channel，能够识别那条通路
 //在协议中可能存在\0,所以协议部分单独发送，内容跟在后面
 char* addprotocol(char* json,int id,unsigned short type,unsigned short sta)
@@ -21,7 +23,7 @@ char* addprotocol(char* json,int id,unsigned short type,unsigned short sta)
     char* protocol=NULL;
     unsigned short op_type=type;//操作类型，各个表、各个操作（增删改查）
     unsigned short status=sta;//返回类型，SUNCCESS、Failure。。。
-    int CRC=4;//CRC校验，包括json+4个字段
+    int CRC=4;//CRC校验，包括json+4个字段,暂无
     int user_id=id;
     int json_length=strlen(json);
     protocol=new char[json_length+16+1];
@@ -48,16 +50,17 @@ void test()
     }
     printf("%s",s+16);
 }
-
+/*
 int main()
 {
     test();
-    /*int x=2;
+    
+    int x=2;
     char* s=(char*)&x;
     char m[10];
     memcpy(m,&x,4);
     for(int i=0;i<4;i++)
     printf("%d  ",m[i]);
-*/
+    
     return 0;
-}
+}*/

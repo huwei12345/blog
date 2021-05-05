@@ -1,3 +1,6 @@
+
+//先把一个简单的协议完成，能够和前端通信，然后再上层
+
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<netinet/in.h>
@@ -11,24 +14,12 @@
 #include<fcntl.h>
 #include<iostream>
 #include<sys/epoll.h>
-#include"mysqlpool.h"
-#include"addjson.h"
 
 #define BUFFER_SIZE 1024
 #define CONTENT_SIZE 1024*1024
 #define EPOLLNUM 1024
 #define trans4(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))|((x[2]<<16)&(0x00ff0000))|((x[3]<<24)&(0xff000000))//
 #define trans2(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))//
-
-enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_collect_t,insert_comment_t,insert_user_rel_t,
-             query_user_t,query_user_list_t,query_user_rel_t,query_user_rel_list_t,query_group_t,query_group_list_t,
-             query_article_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_list_t,
-             modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
-             delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
-             };
-//type还要加一些如login
-
-enum Status{RES_SUCCESS=0,RES_FAILURE,RES_CONNECTED,RES_DISCONNECTED,RES_PERMISSION_DENEY,REQUEST,RESPONSE};
 /*
 void add_epoll_fd(int client_fd)
 {
@@ -71,44 +62,6 @@ struct Result
     char* json;
     char* protocol;
 };
-Result* packet_response(void *content,int status,int type)
-{
-    //返回肯定是12+strlen（json）,json中没有\0
-    char* str=NULL;
-    char* result=new char[12];
-    Result *res=new Result;
-    //将结果打包
-    if(content!=NULL)
-        switch(type)
-        {
-            case insert_user_t:
-                str=struct2json(content,USER);
-                break;
-            case query_user_t:
-                str=struct2json(content,USER);
-                break;
-            case modify_user_t:
-                str=struct2json(content,USER);
-                break;
-            case delete_user_t:
-                str=struct2json(content,USER);
-                break;
-        }
-    res->json=str;
-    res->protocol=result;
-    int CRC=4;//CRC校验，包括json+4个字段,暂无
-    unsigned int length=12;
-    if(str!=NULL)
-        length+=strlen(str);//包总长度
-    memcpy(result,&length,4);
-    memcpy(result+4,&type,2);
-    memcpy(result+6,&status,2);
-    memcpy(result+8,&CRC,4);
-
-    //增加64位前缀，用协议层封装
-    return res;
-}
-
 char* get_request(int fd)//获取请求并处理,不读到12不返回的
 {
     char* buffer=new char[1000];
@@ -136,58 +89,15 @@ char* get_request(int fd)//获取请求并处理,不读到12不返回的
 //buffer表示传来的请求，
 struct Result* process_request(char* buffer)
 {
-    int length=trans4((buffer));//len-12==0??????buffer[len-12]=='\0'??
-    int status=trans2((buffer+4));
-    int type=trans2((buffer+6));
-    unsigned int CRC=trans4((buffer));
-    char* json=buffer+12;
-    //int ret=assert_crc(buffer,CRC);crc检验
-    struct Result* response=NULL;
-    int state=0;
-    if(status==REQUEST)
-        switch(type)
-        {
-            case insert_user_t:
-            {
-                User* user=(User*)json2struct(json,USER);
-                state=insert_user(user);
-                response=packet_response(NULL,state,type);
-                break;
-            }
-            case query_user_t:
-            {
-                User* user=new User;
-                user=(User*)json2struct(json,USER);
-                int id=user->user_id;
-                user=query_user(id);//查询然后strcut2json 然后协议
-                if(user!=NULL)
-                    state=RES_SUCCESS;
-                response=packet_response(user,state,type);
-                break;
-            }
-            case modify_user_t:
-            {
-                User* user=new User;
-                user=(User*)json2struct(json,USER);
-                state=modify_user(user);//查询然后strcut2json 然后协议
-                response=packet_response(NULL,state,type);
-                break;
-            }
-            case delete_user_t:
-            {
-                User* user=new User;
-                user=(User*)json2struct(json,USER);
-                state=delete_user(user->user_id);
-                response=packet_response(NULL,state,type);
-            }
-            default:
-                break;
-        }
-    else
-    {
-        return NULL;
-    }
-    return response;
+    Result *result=new Result;
+    result->json=new char[10];
+    strcpy(result->json,"hello world");
+    result->protocol=new char[12];
+    int x=1;
+    memcpy(result,&x,4);
+    memcpy(result+4,&x,4);
+    memcpy(result+8,&x,4);
+    return result;
 }
 
 int send_response(int fd,struct Result *result)
@@ -239,7 +149,7 @@ void work_thread_loop(void* arg)
                 }
                 if(events[i].events|EPOLLOUT)//有数据发送
                 {
-                    std::cout<<"some thing send out"<<endl;
+                    std::cout<<"some thing send out"<<std::endl;
                 }
                 if(events[i].events|EPOLLERR)
                 {
@@ -338,20 +248,3 @@ int main(int argc,char* argv[])
     }
     return 0;
 }
-
-//为json内容添加协议前缀
-//最终黑盒数据
-/*
-                       4字节位
-|                                                  |
------------- -------------- ------------ -----------
-                        长度
-          状态                        操作类型
-                        CRC(针对json+上述4项)                        
-
-
-*/
-
-
-//get_black_data,第二个参数也可以是一个channel，能够识别那条通路
-//在协议中可能存在\0,所以协议部分单独发送，内容跟在后面

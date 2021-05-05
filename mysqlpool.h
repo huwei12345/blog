@@ -4,7 +4,7 @@
 #include<stdio.h>
 using namespace std;
 class CMysql;
-enum Result {SUCCESS=0,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR};
+enum SQL_Rusult {SUCCESS=0,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR};
 //用户信息
 struct User
 {
@@ -65,12 +65,12 @@ struct Collect
 void mysql_init();
 CMysql* get_mysql_handler();
 
-Result insert_user(struct User *p);
-Result insert_user_rel(struct User_Relation *user_relation);
-Result insert_group(struct Group *group);
-Result insert_article(struct Article *article);
-Result insert_comment(struct Comment *comment);
-Result insert_collect(struct Collect *collect);
+SQL_Rusult insert_user(struct User *p);
+SQL_Rusult insert_user_rel(struct User_Relation *user_relation);
+SQL_Rusult insert_group(struct Group *group);
+SQL_Rusult insert_article(struct Article *article);
+SQL_Rusult insert_comment(struct Comment *comment);
+SQL_Rusult insert_collect(struct Collect *collect);
 
 User* query_my_user(char* account,char* password);
 User* query_user(unsigned int user_id);
@@ -81,22 +81,22 @@ Article* query_article(unsigned int art_id);
 Comment* query_comment(unsigned int art_id);
 Collect* query_collect(unsigned int user_id);
 
-Result modify_user(struct User *user);
-Result modify_user_rel(struct User_Relation *user_relation);
-Result modify_group(struct Group *group);
-Result modify_article(struct Article *article);
-Result modify_comment(struct Comment *comment);
-Result modify_collect(struct Collect *collect);
+SQL_Rusult modify_user(struct User *user);
+SQL_Rusult modify_user_rel(struct User_Relation *user_relation);
+SQL_Rusult modify_group(struct Group *group);
+SQL_Rusult modify_article(struct Article *article);
+SQL_Rusult modify_comment(struct Comment *comment);
+SQL_Rusult modify_collect(struct Collect *collect);
 
-Result delete_user(int user_id);
-Result delete_user_rel(int user_id,int user_rel_id);
-Result delete_all_user_rel(int user_id);
-Result delete_group(int user_id,int group_id);
-Result delete_all_group(int user_id);
-Result delete_article(int art_id);
-Result delete_all_article(int user_id);
-Result delete_comment(int art_id,int comment_id);
-Result delete_comment_all(int art_id);
-Result delete_collect(int user_id,int art_id);
-Result delete_collect_all(int user_id);
+SQL_Rusult delete_user(int user_id);
+SQL_Rusult delete_user_rel(int user_id,int user_rel_id);
+SQL_Rusult delete_all_user_rel(int user_id);
+SQL_Rusult delete_group(int user_id,int group_id);
+SQL_Rusult delete_all_group(int user_id);
+SQL_Rusult delete_article(int art_id);
+SQL_Rusult delete_all_article(int user_id);
+SQL_Rusult delete_comment(int art_id,int comment_id);
+SQL_Rusult delete_comment_all(int art_id);
+SQL_Rusult delete_collect(int user_id,int art_id);
+SQL_Rusult delete_collect_all(int user_id);
 #endif

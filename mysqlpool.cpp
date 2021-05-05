@@ -66,7 +66,7 @@ CMysql* get_mysql_handler()
     return NULL;
 }
 
-Result insert_user(struct User *p)
+SQL_Rusult insert_user(struct User *p)
 {
     char* str = new char[100];
     snprintf(str, 200, "insert into users_t(name,address,sex,create_time,fans_num,article_num,account,password) values('%s','%s','%s','%s',%d,%d,'%s','%s');",p->name, p->address
@@ -84,7 +84,7 @@ Result insert_user(struct User *p)
     return SUCCESS;
 }
 
-Result insert_user_rel(struct User_Relation *user_relation)
+SQL_Rusult insert_user_rel(struct User_Relation *user_relation)
 {
     char* str = new char[100];
     if(user_relation->rel_user_id<=0||user_relation->user_id<=0)
@@ -101,7 +101,7 @@ Result insert_user_rel(struct User_Relation *user_relation)
     delete[] str;
     return SUCCESS;
 }
-Result insert_group(struct Group *group)
+SQL_Rusult insert_group(struct Group *group)
 {
     char* str = new char[100];
     if(group->group_name==NULL)
@@ -118,7 +118,7 @@ Result insert_group(struct Group *group)
     delete[] str;
     return SUCCESS;
 }
-Result insert_article(struct Article *article)
+SQL_Rusult insert_article(struct Article *article)
 {
     int len=strlen(article->text);
     char* str = new char[200+len];
@@ -135,7 +135,7 @@ Result insert_article(struct Article *article)
     delete[] str;
     return SUCCESS;
 }
-Result insert_comment(struct Comment *comment)
+SQL_Rusult insert_comment(struct Comment *comment)
 {
     int len=strlen(comment->text);
     char* str = new char[200+len];
@@ -152,7 +152,7 @@ Result insert_comment(struct Comment *comment)
     delete[] str;
     return SUCCESS;
 }
-Result insert_collect(struct Collect *collect)
+SQL_Rusult insert_collect(struct Collect *collect)
 {
     char* str = new char[200];
     snprintf(str, 200, "insert into collect_t(user_id,collect_art_id,collect_num) values(%d,%d,%d);",
@@ -291,40 +291,18 @@ User_Relation* query_user_rel(unsigned int user_id)
         return NULL;
     else
     {
-        User* user=new User;
+        User_Relation* user_rel=new User_Relation;
         //不只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
 		if (pRow == NULL)
 			return NULL;
         int length=0;
-		user->user_id=pRow[0].getInt32();
+		user_rel->user_id=pRow[0].getInt32();
         
-		length=pRow[1].getString().length()+1;
-        user->name = new char[length];
-        strcpy(user->name,pRow[1].getString().c_str());
-        user->name[length-1]='\0';
-
-        length=pRow[2].getString().length()+1;
-        user->address=new char[length];
-        strcpy(user->address,pRow[2].getString().c_str());
-        user->address[length-1]='\0';
-
-        length=pRow[3].getString().length()+1;
-        user->sex=new char[length];
-        strcpy(user->sex,pRow[3].getString().c_str());
-        user->sex[length-1]='\0';
-
-        length=pRow[4].getString().length()+1;
-        user->create_time=new char[length];
-        strcpy(user->create_time,pRow[4].getString().c_str());
-        user->create_time[length-1]='\0';
-
-        user->fans_num=pRow[5].getInt32();
-		user->article_num = pRow[6].getInt32();
-
+        user_rel->rel_user_id=pRow[1].getInt32();
 	    res->endQuery();
         delete res;
-        return user;
+        return user_rel;
     }
     return NULL;
 }
@@ -349,7 +327,7 @@ Collect* query_collect(unsigned int user_id)
 {
     //根据用户id获取个人收藏文章id
 }
-Result modify_user(struct User *user)
+SQL_Rusult modify_user(struct User *user)
 {
     char* str = new char[100];
     int flag=1;//用于','的使用
@@ -373,27 +351,27 @@ Result modify_user(struct User *user)
     delete[] str;
     return SUCCESS;
 }
-Result modify_user_rel(struct User_Relation *user_relation)
+SQL_Rusult modify_user_rel(struct User_Relation *user_relation)
 {
 
 }
-Result modify_group(struct Group *group)
+SQL_Rusult modify_group(struct Group *group)
 {
 
 }
-Result modify_article(struct Article *article)
+SQL_Rusult modify_article(struct Article *article)
 {
 
 }
-Result modify_comment(struct Comment *comment)
+SQL_Rusult modify_comment(struct Comment *comment)
 {
 
 }
-Result modify_collect(struct Collect *collect)
+SQL_Rusult modify_collect(struct Collect *collect)
 {
-
+    
 }
-Result delete_user(int user_id)
+SQL_Rusult delete_user(int user_id)
 {
     char* str = new char[100];
     int flag=1;//用于','的使用
@@ -409,43 +387,43 @@ Result delete_user(int user_id)
     delete[] str;
     return SUCCESS;
 }
-Result delete_user_rel(int user_id,int user_rel_id)
+SQL_Rusult delete_user_rel(int user_id,int user_rel_id)
 {
     //根据用户id和关注者id，删除关注关系
 }
-Result delete_all_user_rel(int user_id)
+SQL_Rusult delete_all_user_rel(int user_id)
 {
     //根据用户id删除其所有关注
 }
-Result delete_group(int user_id,int group_id)
+SQL_Rusult delete_group(int user_id,int group_id)
 {
     //删除某个分组
 }
-Result delete_all_group(int user_id)
+SQL_Rusult delete_all_group(int user_id)
 {
     //删除个人所有分组
 }
-Result delete_article(int art_id)
+SQL_Rusult delete_article(int art_id)
 {
     //删除谋篇文章
 }
-Result delete_all_article(int user_id)
+SQL_Rusult delete_all_article(int user_id)
 {
     //删除个人所有文章
 }
-Result delete_comment(int art_id,int comment_id)
+SQL_Rusult delete_comment(int art_id,int comment_id)
 {
     //删除某条评论
 }
-Result delete_comment_all(int art_id)
+SQL_Rusult delete_comment_all(int art_id)
 {
     //删除该文章所有评论
 }
-Result delete_collect(int user_id,int art_id)
+SQL_Rusult delete_collect(int user_id,int art_id)
 {
     //删除个人的某个收藏
 }
-Result delete_collect_all(int user_id)
+SQL_Rusult delete_collect_all(int user_id)
 {
     //删除个人所有收藏
 }

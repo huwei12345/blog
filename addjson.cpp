@@ -1,7 +1,3 @@
-#include<stdio.h>
-#include"cJSON.h"
-#include<string.h>
-#include"../mysqlpool.h"
 #include"addjson.h"
 void test_s2j();
 void test_j2s();
