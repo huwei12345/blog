@@ -4,99 +4,145 @@
 #include<stdio.h>
 using namespace std;
 class CMysql;
-enum SQL_Rusult {SUCCESS=0,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR};
+enum Status{REQUEST=1,REQ_FORMAT_ERROR,SUCCESS,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR,DELETE_ERROR,QUERY_ERROR};
 //用户信息
-struct User
+class User
 {
-    unsigned int user_id;//用户id
+public:
+    User():user_id(-1),
+            name(NULL),
+            address(NULL),
+            sex(NULL),
+            create_time(NULL),
+            fans_num(-1),
+            article_num(-1),
+            account(NULL),
+            password(NULL)
+    {}
+    int user_id;//用户id
     char* name;//昵称
     char* address;//地址
     char* sex;//性别
     char* create_time;//创建日期
-    unsigned int fans_num;//粉丝数
-    unsigned int article_num;//文章数
+    int fans_num;//粉丝数
+    int article_num;//文章数
     char* account;//账号
     char* password;//密码
+
+    
 };
 //用户关系
-struct User_Relation
+class User_Relation
 {
-    unsigned int user_id;//关注者id
-    unsigned int rel_user_id;//被关注者id
+public:
+    User_Relation():user_id(-1),
+                    rel_user_id(-1)
+    {}
+    int user_id;//关注者id
+    int rel_user_id;//被关注者id
 };
 //文章分组
-struct Group
+class Group
 {
-    unsigned int user_id;//每个用户都有分组
-    unsigned int group_id;//组id
+public:
+    Group():user_id(-1),
+            group_id(-1),
+            group_name(NULL),
+            father_group_id(-1)
+    {}
+    int user_id;//每个用户都有分组
+    int group_id;//组id
     char* group_name;
-    unsigned int father_group_id;//本组的父组节点
+    int father_group_id;//本组的父组节点
 };
 //文章
-struct Article
+class Article
 {
-    unsigned int art_id;//文章id
-    unsigned int user_id;//用户id
+public:
+    Article():art_id(-1),
+                user_id(-1),
+                title(NULL),
+                text(NULL),
+                upvote_num(-1),
+                create_time(NULL),
+                modify_time(NULL),
+                group_id(-1)
+    {}
+    int art_id;//文章id
+    int user_id;//用户id
     char* title;//文章名
     char* text;//文章内容
-    unsigned int upvote_num;//点赞数
+    int upvote_num;//点赞数
     char* create_time;//创建时间
     char* modify_time;//最后修改时间
-    unsigned int group_id;//属于分组
+    int group_id;//属于分组
 };
 //评论
-struct Comment
+class Comment
 {
-    unsigned int comment_id;//评论id
-    unsigned int art_id;//文章id
-    unsigned int com_user_id;//评论者的id
+public:
+    Comment():comment_id(-1),
+                art_id(-1),
+                com_user_id(-1),
+                text(NULL),
+                upvote_num(-1),
+                is_question(-1)
+    {}
+    int comment_id;//评论id
+    int art_id;//文章id
+    int com_user_id;//评论者的id
     char* text;//评论内容
-    unsigned int upvote_num;//评论获赞数
-    unsigned int is_question;//回复是否针对问题
+    int upvote_num;//评论获赞数
+    int is_question;//回复是否针对问题
 };
 //收藏
-struct Collect
+class Collect
 {
-    unsigned int user_id;//用户id
-    unsigned int collect_art_id;//被收藏文章/问题id
-    unsigned int collect_num;//收藏顺序
+public:
+    Collect():user_id(-1),
+                collect_art_id(-1),
+                collect_num(-1)
+    {}
+    int user_id;//用户id
+    int collect_art_id;//被收藏文章/问题id
+    int collect_num;//收藏顺序
 };
 
 void mysql_init();
 CMysql* get_mysql_handler();
 
-SQL_Rusult insert_user(struct User *p);
-SQL_Rusult insert_user_rel(struct User_Relation *user_relation);
-SQL_Rusult insert_group(struct Group *group);
-SQL_Rusult insert_article(struct Article *article);
-SQL_Rusult insert_comment(struct Comment *comment);
-SQL_Rusult insert_collect(struct Collect *collect);
+Status insert_user(User *p);
+Status insert_user_rel(User_Relation *user_relation);
+Status insert_group(Group *group);
+Status insert_article(Article *article);
+Status insert_comment(Comment *comment);
+Status insert_collect(Collect *collect);
 
 User* query_my_user(char* account,char* password);
-User* query_user(unsigned int user_id);
-User_Relation* query_user_rel(unsigned int user_id);
-Group* query_group(unsigned int user_id);
-Article* query_article_title(unsigned int user_id);
-Article* query_article(unsigned int art_id);
-Comment* query_comment(unsigned int art_id);
-Collect* query_collect(unsigned int user_id);
+User* query_user(int user_id);
+User_Relation* query_user_rel(int user_id);
+Group* query_group(int user_id);
+Article* query_article_title(int user_id);
+Article* query_article(int art_id);
+Comment* query_comment(int art_id);
+Collect* query_collect(int user_id);
 
-SQL_Rusult modify_user(struct User *user);
-SQL_Rusult modify_user_rel(struct User_Relation *user_relation);
-SQL_Rusult modify_group(struct Group *group);
-SQL_Rusult modify_article(struct Article *article);
-SQL_Rusult modify_comment(struct Comment *comment);
-SQL_Rusult modify_collect(struct Collect *collect);
+Status modify_user(User *user);
+Status modify_user_rel(User_Relation *user_relation);
+Status modify_group(Group *group);
+Status modify_article(Article *article);
+Status modify_comment(Comment *comment);
+Status modify_collect(Collect *collect);
 
-SQL_Rusult delete_user(int user_id);
-SQL_Rusult delete_user_rel(int user_id,int user_rel_id);
-SQL_Rusult delete_all_user_rel(int user_id);
-SQL_Rusult delete_group(int user_id,int group_id);
-SQL_Rusult delete_all_group(int user_id);
-SQL_Rusult delete_article(int art_id);
-SQL_Rusult delete_all_article(int user_id);
-SQL_Rusult delete_comment(int art_id,int comment_id);
-SQL_Rusult delete_comment_all(int art_id);
-SQL_Rusult delete_collect(int user_id,int art_id);
-SQL_Rusult delete_collect_all(int user_id);
+Status delete_user(int user_id);
+Status delete_user_rel(int user_id,int user_rel_id);
+Status delete_all_user_rel(int user_id);
+Status delete_group(int user_id,int group_id);
+Status delete_all_group(int user_id);
+Status delete_article(int art_id);
+Status delete_all_article(int user_id);
+Status delete_comment(int art_id,int comment_id);
+Status delete_comment_all(int art_id);
+Status delete_collect(int user_id,int art_id);
+Status delete_collect_all(int user_id);
 #endif

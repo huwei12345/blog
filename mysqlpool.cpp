@@ -39,7 +39,7 @@ void mysql_init()
     string pwd("123456");
     string dbName("blog");
     //CMysqlManager mgr;
-    //if (mgr.init(host.c_str(), user.c_str(), pwd.c_str(), dbName.c_str()) == false)
+    //if(mgr.init(host.c_str(), user.c_str(), pwd.c_str(), dbName.c_str()) == false)
     //    return;    
     mysqlpool = new std::shared_ptr<CMysql>[n];
     mysqlqueue=new int[n];
@@ -66,25 +66,72 @@ CMysql* get_mysql_handler()
     return NULL;
 }
 
-SQL_Rusult insert_user(struct User *p)
+Status insert_user(User *p)
 {
-    char* str = new char[100];
-    snprintf(str, 200, "insert into users_t(name,address,sex,create_time,fans_num,article_num,account,password) values('%s','%s','%s','%s',%d,%d,'%s','%s');",p->name, p->address
-		, p->sex, p->create_time, p->fans_num,p->article_num, p->account, p->password);
-	printf("str = %s\n",str);
+    char* str = new char[200];
+    char* temp=new char[100];
+    snprintf(str, 200, "insert into users_t(name,address,sex,create_time,fans_num,article_num,account,password) values(");
+	if(p->name!=NULL)
+        snprintf(temp,100,"'%s'",p->name);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    str=strcat(str,temp);
+    if(p->address!=NULL)
+        snprintf(temp,100,",'%s'",p->address);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(p->sex!=NULL)
+        snprintf(temp,100,",'%s'",p->sex);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(p->create_time!=NULL)
+        snprintf(temp,100,",'%s'",p->create_time);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(p->fans_num!=-1)
+        snprintf(temp,100,",%d",p->fans_num);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(p->article_num!=-1)
+        snprintf(temp,100,",%d",p->article_num);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(p->account!=NULL)
+        snprintf(temp,100,",'%s'",p->account);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(p->password!=NULL)
+        snprintf(temp,100,",'%s'",p->password);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    snprintf(temp,100,");");
+    strcat(str,temp);
+    printf("str = %s\n",str);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
-    if (m_mysql->execute(str)==false)//插入数据,已经有了
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
 	}
     delete[] str;
+    delete[] temp;
     return SUCCESS;
 }
 
-SQL_Rusult insert_user_rel(struct User_Relation *user_relation)
+Status insert_user_rel(User_Relation *user_relation)
 {
     char* str = new char[100];
     if(user_relation->rel_user_id<=0||user_relation->user_id<=0)
@@ -92,8 +139,10 @@ SQL_Rusult insert_user_rel(struct User_Relation *user_relation)
     snprintf(str, 200, "insert into users_rel_t(user_id,rel_user_id) values(%d,%d);",user_relation->user_id, user_relation->rel_user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
+    {
         return GET_MYSQL_ERROR;
-	if (m_mysql->execute(str)==false)//插入数据,已经有了
+    }
+    if((m_mysql->execute(str))==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
@@ -101,7 +150,7 @@ SQL_Rusult insert_user_rel(struct User_Relation *user_relation)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult insert_group(struct Group *group)
+Status insert_group(Group *group)
 {
     char* str = new char[100];
     if(group->group_name==NULL)
@@ -109,8 +158,10 @@ SQL_Rusult insert_group(struct Group *group)
     snprintf(str, 200, "insert into group_t(user_id,group_id,group_name,father_group) values(%d,%d,'%s',%d);",group->user_id, group->group_id,group->group_name,group->father_group_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
+    {
         return GET_MYSQL_ERROR;
-	if (m_mysql->execute(str)==false)//插入数据,已经有了
+    }
+    if((m_mysql->execute(str))==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
@@ -118,7 +169,7 @@ SQL_Rusult insert_group(struct Group *group)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult insert_article(struct Article *article)
+Status insert_article(Article *article)
 {
     int len=strlen(article->text);
     char* str = new char[200+len];
@@ -126,8 +177,10 @@ SQL_Rusult insert_article(struct Article *article)
         article->user_id, article->title,article->text,article->upvote_num,article->create_time,article->modify_time,article->group_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
+    {
         return GET_MYSQL_ERROR;
-	if (m_mysql->execute(str)==false)//插入数据,已经有了
+    }
+    if((m_mysql->execute(str))==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
@@ -135,7 +188,7 @@ SQL_Rusult insert_article(struct Article *article)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult insert_comment(struct Comment *comment)
+Status insert_comment(Comment *comment)
 {
     int len=strlen(comment->text);
     char* str = new char[200+len];
@@ -143,8 +196,10 @@ SQL_Rusult insert_comment(struct Comment *comment)
         comment->comment_id,comment->art_id,comment->com_user_id,comment->text,comment->upvote_num,comment->is_question);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
+    {
         return GET_MYSQL_ERROR;
-	if (m_mysql->execute(str)==false)//插入数据,已经有了
+    }
+    if((m_mysql->execute(str))==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
@@ -152,15 +207,17 @@ SQL_Rusult insert_comment(struct Comment *comment)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult insert_collect(struct Collect *collect)
+Status insert_collect(Collect *collect)
 {
     char* str = new char[200];
     snprintf(str, 200, "insert into collect_t(user_id,collect_art_id,collect_num) values(%d,%d,%d);",
         collect->user_id,collect->collect_art_id,collect->collect_num);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
+    {
         return GET_MYSQL_ERROR;
-	if (m_mysql->execute(str)==false)//插入数据,已经有了
+    }
+    if((m_mysql->execute(str))==false)//插入数据,已经有了
 	{
 		cout << "data insert error" << endl;
 		return INSERT_ERROR;
@@ -189,7 +246,7 @@ User* query_my_user(char* account,char* password)
         User* user=new User;
         //只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
-		if (pRow == NULL)
+		if(pRow == NULL)
 			return NULL;
         int length=0;
 		user->user_id=pRow[0].getInt32();
@@ -223,7 +280,7 @@ User* query_my_user(char* account,char* password)
     }
     return NULL;
 }
-User* query_user(unsigned int user_id)
+User* query_user(int user_id)
 {
     //根据user_id获取个人信息，非本人信息
     QueryResult* res=NULL;
@@ -241,7 +298,7 @@ User* query_user(unsigned int user_id)
         User* user=new User;
         //只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
-		if (pRow == NULL)
+		if(pRow == NULL)
 			return NULL;
         int length=0;
 		user->user_id=pRow[0].getInt32();
@@ -275,7 +332,7 @@ User* query_user(unsigned int user_id)
     }
     return NULL;
 }
-User_Relation* query_user_rel(unsigned int user_id)
+User_Relation* query_user_rel(int user_id)
 {
     //要返回数组
     //根据user_id获取个人本人关注的用户的id
@@ -294,9 +351,10 @@ User_Relation* query_user_rel(unsigned int user_id)
         User_Relation* user_rel=new User_Relation;
         //不只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
-		if (pRow == NULL)
+		if(pRow == NULL)
 			return NULL;
         int length=0;
+        printf("length=%d",length);
 		user_rel->user_id=pRow[0].getInt32();
         
         user_rel->rel_user_id=pRow[1].getInt32();
@@ -306,35 +364,165 @@ User_Relation* query_user_rel(unsigned int user_id)
     }
     return NULL;
 }
-Group* query_group(unsigned int user_id)
+Group* query_group(int user_id)
 {
     //根据user_id获取个人目录的组信息
+        //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Group* group=new Group;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+        printf("length=%d",length);
+	    res->endQuery();
+        delete res;
+        return group;
+    }
+    return NULL;
+
 }
-Article* query_article_title(unsigned int user_id)
+Article* query_article_title(int user_id)
 {
     //返回名字数组
     //根据user_id获取个人的文章名，用于构建目录，在点击时在读取文章
+        //根据user_id获取个人目录的组信息
+        //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Article* article=new Article;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+        printf("length=%d",length);
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
 }
-Article* query_article(unsigned int art_id)
+Article* query_article(int art_id)
 {
     //根据文章id获取个人的文章信息
+        //根据user_id获取个人目录的组信息
+        //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",art_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Article* article=new Article;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+        printf("length=%d",length);
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
 }
-Comment* query_comment(unsigned int art_id)
+Comment* query_comment(int art_id)
 {
     //根据文章id获取评论/回答
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",art_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Comment* comment=new Comment;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+        printf("length=%d",length);
+	    res->endQuery();
+        delete res;
+        return comment;
+    }
+    return NULL;
 }
-Collect* query_collect(unsigned int user_id)
+Collect* query_collect(int user_id)
 {
     //根据用户id获取个人收藏文章id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Collect* collect=new Collect;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+        printf("length=%d",length);
+	    res->endQuery();
+        delete res;
+        return collect;
+    }
+    return NULL;
 }
-SQL_Rusult modify_user(struct User *user)
+Status modify_user(User *user)
 {
-    char* str = new char[100];
-    int flag=1;//用于','的使用
-	snprintf(str, 100, "update user_t set");
+    char* str=new char[100];
+	snprintf(str,100,"update user_t set");
+    if(user==NULL)
+        return MODIFY_ERROR;
     if(user->name!=NULL)
-        snprintf(str, 100,"%s name=%s", str, user->name);
-	if(user->sex!=NULL)
+        snprintf(str,100,"%s name=%s",str,user->name);
+    if(user->sex!=NULL)
         snprintf(str,100,"%s,sex=%s",str,user->sex);
     if(user->address!=NULL)
         snprintf(str,100,"%s,address=%s",str,user->address);
@@ -343,7 +531,7 @@ SQL_Rusult modify_user(struct User *user)
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
-    if (m_mysql->execute(str)==false)//插入数据,已经有了
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
 		cout << "data modify error" << endl;
 		return MODIFY_ERROR;
@@ -351,35 +539,95 @@ SQL_Rusult modify_user(struct User *user)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult modify_user_rel(struct User_Relation *user_relation)
-{
-
-}
-SQL_Rusult modify_group(struct Group *group)
-{
-
-}
-SQL_Rusult modify_article(struct Article *article)
-{
-
-}
-SQL_Rusult modify_comment(struct Comment *comment)
-{
-
-}
-SQL_Rusult modify_collect(struct Collect *collect)
-{
-    
-}
-SQL_Rusult delete_user(int user_id)
+Status modify_user_rel(User_Relation *user_relation)
 {
     char* str = new char[100];
-    int flag=1;//用于','的使用
+    
+	snprintf(str, 100, "update user_t set");
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
+}
+Status modify_group(Group *group)
+{
+    char* str = new char[100];
+    
+	snprintf(str, 100, "update user_t set");
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
+}
+Status modify_article(Article *article)
+{
+    char* str = new char[100];
+    
+	snprintf(str, 100, "update user_t set");
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
+}
+Status modify_comment(Comment *comment)
+{
+    char* str = new char[100];
+    
+	snprintf(str, 100, "update user_t set");
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
+}
+Status modify_collect(Collect *collect)
+{
+    char* str = new char[100];
+    
+	snprintf(str, 100, "update user_t set");
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
+}
+Status delete_user(int user_id)
+{
+    char* str = new char[100];
+    
     snprintf(str,100,"delete from user_t where user_id=%d",user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
-    if (m_mysql->execute(str)==false)//插入数据,已经有了
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
 		cout << "data modify error" << endl;
 		return MODIFY_ERROR;
@@ -387,43 +635,173 @@ SQL_Rusult delete_user(int user_id)
     delete[] str;
     return SUCCESS;
 }
-SQL_Rusult delete_user_rel(int user_id,int user_rel_id)
+Status delete_user_rel(int user_id,int user_rel_id)
 {
     //根据用户id和关注者id，删除关注关系
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_all_user_rel(int user_id)
+Status delete_all_user_rel(int user_id)
 {
     //根据用户id删除其所有关注
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_group(int user_id,int group_id)
+Status delete_group(int user_id,int group_id)
 {
     //删除某个分组
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_all_group(int user_id)
+Status delete_all_group(int user_id)
 {
     //删除个人所有分组
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_article(int art_id)
+Status delete_article(int art_id)
 {
     //删除谋篇文章
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_all_article(int user_id)
+Status delete_all_article(int user_id)
 {
     //删除个人所有文章
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_comment(int art_id,int comment_id)
+Status delete_comment(int art_id,int comment_id)
 {
     //删除某条评论
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_comment_all(int art_id)
+Status delete_comment_all(int art_id)
 {
     //删除该文章所有评论
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_collect(int user_id,int art_id)
+Status delete_collect(int user_id,int art_id)
 {
     //删除个人的某个收藏
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }
-SQL_Rusult delete_collect_all(int user_id)
+Status delete_collect_all(int user_id)
 {
     //删除个人所有收藏
+    char* str = new char[100];
+    
+    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    CMysql* m_mysql=get_mysql_handler();
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "data modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    delete[] str;
+    return SUCCESS;
 }

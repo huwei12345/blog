@@ -268,8 +268,7 @@ MYSQL_RES* CMysql::query(const char* sql,int k)
         return 0;
 
     MYSQL_RES* result = 0;
-    uint64_t rowCount = 0;
-    uint32_t fieldCount = 0;
+
 
     {
         //LOGI << sql;

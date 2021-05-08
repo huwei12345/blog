@@ -10,15 +10,12 @@
 
 TEST(insert_user, scene)
 {
-    int Result=0;
-    /*
+    Status Result=SUCCESS;
     User *p =new User;
     p->name=new char[10];
     strcpy(p->name,"robot");
-    p->address=new char[5];
-    strcpy(p->address,"NULL");
-    p->create_time=new char[20];
-    strcpy(p->create_time,"2021-04-14 01:53:56");
+    p->address=NULL;
+    p->create_time=NULL;
     p->sex=new char[5];
     strcpy(p->sex,"nan");
     p->article_num=0;
@@ -27,10 +24,10 @@ TEST(insert_user, scene)
     strcpy(p->account,"z123");
     p->password=new char[5];
     strcpy(p->password,"z123");
-    int Result=insert_user(p);
+    Result=insert_user(p);
     ASSERT_EQ(Result,SUCCESS);
 
-    
+    /*
     User_Relation *rel=new User_Relation;
     rel->rel_user_id=3;
     rel->user_id=2;
@@ -71,14 +68,14 @@ TEST(insert_user, scene)
     comment->is_question=0;
     Result=insert_comment(comment);
     ASSERT_EQ(Result,SUCCESS);
-    */
+    
     Collect* collect=new Collect;
     collect->user_id=1;
     collect->collect_art_id=3;
     collect->collect_num=1;
     Result=insert_collect(collect);
     ASSERT_EQ(Result,SUCCESS);
-
+*/
 }
 
 //  测试键值对存在的情况
