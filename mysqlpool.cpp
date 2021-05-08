@@ -134,10 +134,29 @@ Status insert_user(User *p)
 Status insert_user_rel(User_Relation *user_relation)
 {
     char* str = new char[100];
+    char* temp=new char[20];
     if(user_relation->rel_user_id<=0||user_relation->user_id<=0)
         return INSERT_ERROR;
-    snprintf(str, 200, "insert into users_rel_t(user_id,rel_user_id) values(%d,%d);",user_relation->user_id, user_relation->rel_user_id);
+    snprintf(str, 200, "insert into users_rel_t(user_id,rel_user_id) values(");
+    // %d,%d);",user_relation->user_id, user_relation->rel_user_id
+    if(user_relation->user_id!=-1)
+        snprintf(temp,100,"%d",user_relation->user_id);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    str=strcat(str,temp);
+    if(user_relation->rel_user_id!=-1)
+        snprintf(temp,100,",%d",user_relation->rel_user_id);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    snprintf(temp,100,");");
+    strcat(str,temp);
     CMysql* m_mysql=get_mysql_handler();
+    printf("str = %s\n",str);
     if(m_mysql==NULL)
     {
         return GET_MYSQL_ERROR;
@@ -150,12 +169,42 @@ Status insert_user_rel(User_Relation *user_relation)
     delete[] str;
     return SUCCESS;
 }
+
 Status insert_group(Group *group)
 {
     char* str = new char[100];
+    char* temp=new char[40];
     if(group->group_name==NULL)
         return INSERT_ERROR;
-    snprintf(str, 200, "insert into group_t(user_id,group_id,group_name,father_group) values(%d,%d,'%s',%d);",group->user_id, group->group_id,group->group_name,group->father_group_id);
+    snprintf(str, 200, "insert into group_t(user_id,group_id,group_name,father_group) values(");
+    //%d,%d,'%s',%d);",group->user_id, group->group_id,group->group_name,group->father_group_id
+    if(group->user_id!=-1)
+        snprintf(temp,100,"%d",group->user_id);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    str=strcat(str,temp);
+    if(group->group_id!=-1)
+        snprintf(temp,100,",%d",group->group_id);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(group->group_name!=NULL)
+        snprintf(temp,100,",'%s'",group->group_name);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(group->father_group_id!=-1)
+        snprintf(temp,100,",%d",group->father_group_id);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);    
+    snprintf(temp,100,");");
+    strcat(str,temp);
+    printf("str = %s\n",str);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
     {
@@ -172,9 +221,56 @@ Status insert_group(Group *group)
 Status insert_article(Article *article)
 {
     int len=strlen(article->text);
+    char* temp=new char[len+1];
     char* str = new char[200+len];
-    snprintf(str, 200+len, "insert into article_t(user_id,title,article,upvote_num,create_time,modify_time,group_id) values(%d,'%s','%s',%d,'%s','%s',%d);",
-        article->user_id, article->title,article->text,article->upvote_num,article->create_time,article->modify_time,article->group_id);
+    snprintf(str, 200+len, "insert into article_t(user_id,title,upvote_num,create_time,modify_time,group_id,article) values(");
+    //%d,'%s','%s',%d,'%s','%s',%d);",
+    //    article->user_id, article->title,article->text,article->upvote_num,article->create_time,article->modify_time,article->group_id    
+    if(article->user_id!=-1)
+        snprintf(temp,200,"%d",article->user_id);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    str=strcat(str,temp);
+    if(article->title!=NULL)
+        snprintf(temp,200,",'%s'",article->title);
+    else
+        snprintf(temp,200,",NULL");
+    str=strcat(str,temp);
+
+    if(article->upvote_num!=-1)
+        snprintf(temp,100,",%d",article->upvote_num);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(article->create_time!=NULL)
+        snprintf(temp,200,",'%s'",article->create_time);
+    else
+        snprintf(temp,200,",NULL");
+    str=strcat(str,temp);
+    if(article->modify_time!=NULL)
+        snprintf(temp,200,",'%s'",article->modify_time);
+    else
+        snprintf(temp,200,",NULL");
+    str=strcat(str,temp);
+    if(article->group_id!=-1)
+        snprintf(temp,100,",%d",article->group_id);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(article->text!=NULL)//内存太多，不如写if else(特殊处理，spinrf(temp+strlen(temp),"'%s'",article->text) else NULL)
+        snprintf(temp,200,",'%s'",article->text);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+
+    snprintf(temp,100,");");
+    strcat(str,temp);
+    printf("str = %s\n",str);
+
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
     {
@@ -191,9 +287,50 @@ Status insert_article(Article *article)
 Status insert_comment(Comment *comment)
 {
     int len=strlen(comment->text);
+    char* temp=new char[len+1];
     char* str = new char[200+len];
-    snprintf(str, 200+len, "insert into comment_t(com_id,art_id,com_user_id,com_text,upvote_num,is_question) values(%d,%d,%d,'%s',%d,%d);",
-        comment->comment_id,comment->art_id,comment->com_user_id,comment->text,comment->upvote_num,comment->is_question);
+    snprintf(str, 200+len, "insert into comment_t(com_id,art_id,com_user_id,com_text,upvote_num,is_question) values(");
+    //%d,%d,%d,'%s',%d,%d);",
+    //    comment->comment_id,comment->art_id,comment->com_user_id,comment->text,comment->upvote_num,comment->is_question    
+    if(comment->comment_id!=-1)
+        snprintf(temp,200,"%d",comment->comment_id);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    if(comment->art_id!=-1)
+        snprintf(temp,200,",%d",comment->art_id);
+    else
+        snprintf(temp,200,",0");
+    str=strcat(str,temp);
+
+    if(comment->com_user_id!=-1)
+        snprintf(temp,100,",%d",comment->com_user_id);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    if(comment->text!=NULL) 
+        snprintf(temp,100,",'%s'",comment->text);
+    else
+        snprintf(temp,100,",NULL");
+    str=strcat(str,temp);
+    if(comment->upvote_num!=-1)
+        snprintf(temp,100,",%d",comment->upvote_num);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+
+    if(comment->is_question!=-1)
+        snprintf(temp,100,",%d",comment->is_question);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    snprintf(temp,100,");");
+    strcat(str,temp);
+    printf("str = %s\n",str);
+
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
     {
@@ -210,8 +347,33 @@ Status insert_comment(Comment *comment)
 Status insert_collect(Collect *collect)
 {
     char* str = new char[200];
+    char* temp=new char[40];
     snprintf(str, 200, "insert into collect_t(user_id,collect_art_id,collect_num) values(%d,%d,%d);",
         collect->user_id,collect->collect_art_id,collect->collect_num);
+    
+    if(collect->user_id!=-1)
+        snprintf(temp,200,"%d",collect->user_id);
+    else
+    {
+        delete[] str;
+        delete[] temp;
+        return INSERT_ERROR;
+    }
+    if(collect->collect_art_id!=-1)
+        snprintf(temp,200,",%d",collect->collect_art_id);
+    else
+        snprintf(temp,200,",0");
+    str=strcat(str,temp);
+
+    if(collect->collect_num!=-1)
+        snprintf(temp,100,",%d",collect->collect_num);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
+    snprintf(temp,100,");");
+    strcat(str,temp);
+    printf("str = %s\n",str);
+
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
     {
@@ -230,7 +392,6 @@ Status insert_collect(Collect *collect)
 //下个星期改前端和后端网络库
 User* query_my_user(char* account,char* password)
 {
-    
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[200];
@@ -280,6 +441,7 @@ User* query_my_user(char* account,char* password)
     }
     return NULL;
 }
+
 User* query_user(int user_id)
 {
     //根据user_id获取个人信息，非本人信息
@@ -332,14 +494,13 @@ User* query_user(int user_id)
     }
     return NULL;
 }
-User_Relation* query_user_rel(int user_id)
+User* query_user_name(char* name)//需要返回数组
 {
-    //要返回数组
-    //根据user_id获取个人本人关注的用户的id
+    //根据user_id获取个人信息，非本人信息
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
+    char* str=new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where name=%s;",name);
     CMysql* mysql=get_mysql_handler();
     if(mysql==NULL)
         return NULL;
@@ -348,6 +509,61 @@ User_Relation* query_user_rel(int user_id)
         return NULL;
     else
     {
+        User* user=new User;
+        //只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+		user->user_id=pRow[0].getInt32();
+        
+		length=pRow[1].getString().length()+1;
+        user->name = new char[length];
+        strcpy(user->name,pRow[1].getString().c_str());
+        user->name[length-1]='\0';
+
+        length=pRow[2].getString().length()+1;
+        user->address=new char[length];
+        strcpy(user->address,pRow[2].getString().c_str());
+        user->address[length-1]='\0';
+
+        length=pRow[3].getString().length()+1;
+        user->sex=new char[length];
+        strcpy(user->sex,pRow[3].getString().c_str());
+        user->sex[length-1]='\0';
+
+        length=pRow[4].getString().length()+1;
+        user->create_time=new char[length];
+        strcpy(user->create_time,pRow[4].getString().c_str());
+        user->create_time[length-1]='\0';
+
+        user->fans_num=pRow[5].getInt32();
+		user->article_num = pRow[6].getInt32();
+
+	    res->endQuery();
+        delete res;
+        return user;
+    }
+    return NULL;
+}
+
+User_Relation* query_user_rel(int user_id)
+{
+    //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,rel_user_id from users_rel_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        printf("RowCount=%lu,FieldCount=%u\n",res->getRowCount(),res->getFieldCount());
         User_Relation* user_rel=new User_Relation;
         //不只取第一个，应该也只有一个，在插入时保证账号唯一
 		Field* pRow = res->fetch();
@@ -356,7 +572,6 @@ User_Relation* query_user_rel(int user_id)
         int length=0;
         printf("length=%d",length);
 		user_rel->user_id=pRow[0].getInt32();
-        
         user_rel->rel_user_id=pRow[1].getInt32();
 	    res->endQuery();
         delete res;
@@ -703,6 +918,7 @@ Status delete_all_group(int user_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_article(int art_id)
 {
     //删除谋篇文章
@@ -720,6 +936,7 @@ Status delete_article(int art_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_all_article(int user_id)
 {
     //删除个人所有文章
@@ -737,6 +954,7 @@ Status delete_all_article(int user_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_comment(int art_id,int comment_id)
 {
     //删除某条评论
@@ -754,6 +972,7 @@ Status delete_comment(int art_id,int comment_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_comment_all(int art_id)
 {
     //删除该文章所有评论
@@ -771,6 +990,7 @@ Status delete_comment_all(int art_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_collect(int user_id,int art_id)
 {
     //删除个人的某个收藏
@@ -788,6 +1008,7 @@ Status delete_collect(int user_id,int art_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_collect_all(int user_id)
 {
     //删除个人所有收藏

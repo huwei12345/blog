@@ -10,8 +10,9 @@
 
 TEST(insert_user, scene)
 {
+
     Status Result=SUCCESS;
-    User *p =new User;
+/*    User *p =new User;
     p->name=new char[10];
     strcpy(p->name,"robot");
     p->address=NULL;
@@ -26,14 +27,14 @@ TEST(insert_user, scene)
     strcpy(p->password,"z123");
     Result=insert_user(p);
     ASSERT_EQ(Result,SUCCESS);
+*/
 
-    /*
     User_Relation *rel=new User_Relation;
     rel->rel_user_id=3;
     rel->user_id=2;
     Result=insert_user_rel(rel);
     ASSERT_EQ(Result,SUCCESS);
-
+/*
     Group* group=new Group;
     group->user_id=2;
     group->group_id=5;
@@ -87,6 +88,9 @@ TEST(query_my_user, exist)//函数名。exist
     printf("\nid =%d,name =%s,address=%s,sex=%s,create_time=%s,fans_num=%d,article_num=%d\n",p->user_id,p->name,p->address,p->sex,p->create_time,p->fans_num,p->article_num);
     ASSERT_EQ(p->user_id,1);
     ASSERT_STRCASEEQ(p->name,"huwei");
+
+    User_Relation *rel=query_user_rel(1);
+    printf("user_id=%d,user_rel_id=%d\n",rel->user_id,rel->rel_user_id);
 }
 TEST(modify_user, scene)
 {
