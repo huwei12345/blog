@@ -4,7 +4,7 @@
 #include<stdio.h>
 using namespace std;
 class CMysql;
-enum Status{REQUEST=1,REQ_FORMAT_ERROR,SUCCESS,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR,DELETE_ERROR,QUERY_ERROR};
+enum Status{REQUEST=0,REQ_FORMAT_ERROR,SUCCESS,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR,DELETE_ERROR,QUERY_ERROR};
 //用户信息
 class User
 {
@@ -36,10 +36,12 @@ class User_Relation
 {
 public:
     User_Relation():user_id(-1),
-                    rel_user_id(-1)
+                    rel_user_id(-1),
+                    name(NULL)
     {}
     int user_id;//关注者id
     int rel_user_id;//被关注者id
+    char* name;//关注者name
 };
 //文章分组
 class Group
@@ -101,15 +103,26 @@ class Collect
 public:
     Collect():user_id(-1),
                 collect_art_id(-1),
-                collect_num(-1)
+                collect_num(-1),
+                art_name(NULL)
     {}
     int user_id;//用户id
     int collect_art_id;//被收藏文章/问题id
     int collect_num;//收藏顺序
+    char* art_name;
 };
 
 void mysql_init();
 CMysql* get_mysql_handler();
+
+User* query_my_user(char* account,char* password);
+User* query_user(int user_id);
+User_Relation* query_user_rel(int user_id,int* count);
+Group* query_group(int user_id,int* count);
+Article* query_article_title(int user_id,int* count);
+Article* query_article(int art_id);
+Comment* query_comment(int art_id,int* count);
+Collect* query_collect(int user_id,int* count);
 
 Status insert_user(User *p);
 Status insert_user_rel(User_Relation *user_relation);
@@ -117,15 +130,6 @@ Status insert_group(Group *group);
 Status insert_article(Article *article);
 Status insert_comment(Comment *comment);
 Status insert_collect(Collect *collect);
-
-User* query_my_user(char* account,char* password);
-User* query_user(int user_id);
-User_Relation* query_user_rel(int user_id);
-Group* query_group(int user_id);
-Article* query_article_title(int user_id);
-Article* query_article(int art_id);
-Comment* query_comment(int art_id);
-Collect* query_collect(int user_id);
 
 Status modify_user(User *user);
 Status modify_user_rel(User_Relation *user_relation);

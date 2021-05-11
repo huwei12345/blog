@@ -51,6 +51,8 @@ char* struct2json(void* obj,type type)
                 cJSON_AddNumberToObject(json_obj,"user_id",rel->user_id);
             if(rel->rel_user_id!=-1)
                 cJSON_AddNumberToObject(json_obj,"rel_user_id",rel->rel_user_id);
+            if(rel->name!=NULL)
+                cJSON_AddStringToObject(json_obj,"name",rel->name);
             str=cJSON_Print(json_obj);
             {
                 if(str)
@@ -234,6 +236,11 @@ void* json2struct(char* json_str,type type)
             {
                 json_temp=cJSON_GetObjectItem(json,"rel_user_id");
                 user_rel->rel_user_id=json_temp->valueint;
+            }
+            if(cJSON_HasObjectItem(json,"name"))
+            {
+                json_temp=cJSON_GetObjectItem(json,"name");
+                user_rel->name=json_temp->valuestring;
             }
             return user_rel;
         }

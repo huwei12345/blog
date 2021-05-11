@@ -66,6 +66,427 @@ CMysql* get_mysql_handler()
     return NULL;
 }
 
+User* query_my_user(char* account,char* password)
+{
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人,只有一个，只返回一个结构体
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where account='%s' and password='%s';",account,password);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        User* user=new User;
+        //只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+		user->user_id=pRow[0].getInt32();
+		length=pRow[1].getString().length()+1;
+        user->name = new char[length];
+        strcpy(user->name,pRow[1].getString().c_str());
+        user->name[length-1]='\0';
+
+        length=pRow[2].getString().length()+1;
+        user->address=new char[length];
+        strcpy(user->address,pRow[2].getString().c_str());
+        user->address[length-1]='\0';
+
+        length=pRow[3].getString().length()+1;
+        user->sex=new char[length];
+        strcpy(user->sex,pRow[3].getString().c_str());
+        user->sex[length-1]='\0';
+
+        length=pRow[4].getString().length()+1;
+        user->create_time=new char[length];
+        strcpy(user->create_time,pRow[4].getString().c_str());
+        user->create_time[length-1]='\0';
+
+        user->fans_num=pRow[5].getInt32();
+		user->article_num = pRow[6].getInt32();
+
+	    res->endQuery();
+        delete res;
+        return user;
+    }
+    return NULL;
+}
+
+User* query_user(int user_id)
+{
+    //根据user_id获取个人信息，非本人信息,只返回一个
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        User* user=new User;
+        //只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+		user->user_id=pRow[0].getInt32();
+        
+		length=pRow[1].getString().length()+1;
+        user->name = new char[length];
+        strcpy(user->name,pRow[1].getString().c_str());
+        user->name[length-1]='\0';
+
+        length=pRow[2].getString().length()+1;
+        user->address=new char[length];
+        strcpy(user->address,pRow[2].getString().c_str());
+        user->address[length-1]='\0';
+
+        length=pRow[3].getString().length()+1;
+        user->sex=new char[length];
+        strcpy(user->sex,pRow[3].getString().c_str());
+        user->sex[length-1]='\0';
+
+        length=pRow[4].getString().length()+1;
+        user->create_time=new char[length];
+        strcpy(user->create_time,pRow[4].getString().c_str());
+        user->create_time[length-1]='\0';
+
+        user->fans_num=pRow[5].getInt32();
+		user->article_num = pRow[6].getInt32();
+
+	    res->endQuery();
+        delete res;
+        return user;
+    }
+    return NULL;
+}
+User* query_user_name(char* name)//不需要返回数组
+{
+    //根据user_id获取个人信息，非本人信息
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str=new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where name=%s;",name);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        User* user=new User;
+        //只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        int length=0;
+		user->user_id=pRow[0].getInt32();
+        
+		length=pRow[1].getString().length()+1;
+        user->name = new char[length];
+        strcpy(user->name,pRow[1].getString().c_str());
+        user->name[length-1]='\0';
+
+        length=pRow[2].getString().length()+1;
+        user->address=new char[length];
+        strcpy(user->address,pRow[2].getString().c_str());
+        user->address[length-1]='\0';
+
+        length=pRow[3].getString().length()+1;
+        user->sex=new char[length];
+        strcpy(user->sex,pRow[3].getString().c_str());
+        user->sex[length-1]='\0';
+
+        length=pRow[4].getString().length()+1;
+        user->create_time=new char[length];
+        strcpy(user->create_time,pRow[4].getString().c_str());
+        user->create_time[length-1]='\0';
+
+        user->fans_num=pRow[5].getInt32();
+		user->article_num = pRow[6].getInt32();
+
+	    res->endQuery();
+        delete res;
+        return user;
+    }
+    return NULL;
+}
+
+User_Relation* query_user_rel(int user_id,int* count)
+{
+    //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    *count=0;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[250];
+    snprintf(str,200," select users_t.user_id,rel_user_id,name from users_rel_t,users_t where users_rel_t.user_id=users_t.user_id and users_t.user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    delete[] str;
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        unsigned long int row_count=res->getRowCount();
+        *count=row_count;
+        unsigned long int i=0;
+        User_Relation* user_rel=new User_Relation[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            user_rel[i].user_id=pRow[0].getInt32();
+            user_rel[i].rel_user_id=pRow[1].getInt32();
+
+            int length=pRow[2].getString().length()+1;
+            user_rel[i].name=new char[length];
+            strcpy(user_rel[i].name,pRow[2].getString().c_str());
+            user_rel->name[length-1]='\0';
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+		res->endQuery();
+        delete res;
+        return user_rel;
+	}
+    return NULL;
+}
+
+Group* query_group(int user_id,int* count)
+{
+    //根据user_id获取个人目录的组信息
+        //要返回数组
+    //根据user_id获取个人本人关注的用户的id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,group_id,group_name,father_group from group_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        unsigned long int row_count=res->getRowCount();
+        *count=row_count;
+        unsigned long int i=0;
+        Group* group=new Group[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            group[i].user_id=pRow[0].getInt32();
+            group[i].group_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            group[i].group_name=new char[length];
+            strcpy(group[i].group_name,pRow[2].getString().c_str());
+            group[i].group_name[length-1]='\0';
+            
+            group[i].father_group_id=pRow[3].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return group;
+    }
+    return NULL;
+}
+
+Article* query_article_title(int user_id,int* count)
+{
+    //返回名字数组
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[200];
+    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id from article_t where user_id=%d;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        unsigned long int row_count=res->getRowCount();
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+
+Article* query_article(int art_id)//不需要返回数组
+{
+    //根据文章id获取个人的文章信息
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select art_id,article from article_t where art_id=%d;",art_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Article* article=new Article;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        article->art_id=pRow[0].getInt32();
+
+        int length=pRow[1].getString().length()+1;
+        article->title=new char[length];
+        strcpy(article->title,pRow[1].getString().c_str());
+        article->title[length-1]='\0';
+
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+Comment* query_comment(int art_id,int* count)
+{
+    //根据文章id获取评论/回答
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select com_id,art_id,com_user_id,com_text,upvote_num,is_question from comment_t where art_id=%d;",art_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        unsigned long int row_count=res->getRowCount();
+        *count=row_count;
+        unsigned long int i=0;
+        Comment* comment=new Comment[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            comment[i].comment_id=pRow[0].getInt32();
+            comment[i].art_id=pRow[1].getInt32();
+            comment[i].com_user_id=pRow[2].getInt32();
+
+            int length=pRow[3].getString().length()+1;
+            comment[i].text=new char[length];
+            strcpy(comment[i].text,pRow[3].getString().c_str());
+            comment[i].text[length-1]='\0';
+            comment[i].upvote_num=pRow[4].getInt32();
+            comment[i].is_question=pRow[5].getInt32();
+
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return comment;
+    }
+    return NULL;
+}
+Collect* query_collect(int user_id,int* count)
+{
+    //根据用户id获取个人收藏文章id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[300];
+    snprintf(str,300,"select collect_t.user_id,collect_t.collect_art_id,collect_t.collect_num,article_t.title from collect_t,article_t where collect_t.user_id=%d and collect_t.collect_art_id=article_t.art_id;",user_id);
+    CMysql* mysql=get_mysql_handler();
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        unsigned long int row_count=res->getRowCount();
+        *count=row_count;
+        unsigned long int i=0;
+        Collect* collect=new Collect[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            collect[i].user_id=pRow[0].getInt32();
+            collect[i].collect_art_id=pRow[1].getInt32();
+            collect[i].collect_num=pRow[2].getInt32();
+            int length=pRow[3].getString().length()+1;
+            collect[i].art_name=new char[length];
+            strcpy(collect[i].art_name,pRow[3].getString().c_str());
+            collect[i].art_name[length-1]='\0';            
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return collect;
+    }
+    return NULL;
+}
+
 Status insert_user(User *p)
 {
     char* str = new char[200];
@@ -388,361 +809,30 @@ Status insert_collect(Collect *collect)
     return SUCCESS;
 }
 
-//查出来的某些字符串不太好显示，需要调试。这部分要写一个星期，顺便加上json和协议。
-//下个星期改前端和后端网络库
-User* query_my_user(char* account,char* password)
-{
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where account='%s' and password='%s';",account,password);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        User* user=new User;
-        //只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-		user->user_id=pRow[0].getInt32();
-        
-		length=pRow[1].getString().length()+1;
-        user->name = new char[length];
-        strcpy(user->name,pRow[1].getString().c_str());
-        user->name[length-1]='\0';
 
-        length=pRow[2].getString().length()+1;
-        user->address=new char[length];
-        strcpy(user->address,pRow[2].getString().c_str());
-        user->address[length-1]='\0';
-
-        length=pRow[3].getString().length()+1;
-        user->sex=new char[length];
-        strcpy(user->sex,pRow[3].getString().c_str());
-        user->sex[length-1]='\0';
-
-        length=pRow[4].getString().length()+1;
-        user->create_time=new char[length];
-        strcpy(user->create_time,pRow[4].getString().c_str());
-        user->create_time[length-1]='\0';
-
-        user->fans_num=pRow[5].getInt32();
-		user->article_num = pRow[6].getInt32();
-
-	    res->endQuery();
-        delete res;
-        return user;
-    }
-    return NULL;
-}
-
-User* query_user(int user_id)
-{
-    //根据user_id获取个人信息，非本人信息
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where user_id=%d;",user_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        User* user=new User;
-        //只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-		user->user_id=pRow[0].getInt32();
-        
-		length=pRow[1].getString().length()+1;
-        user->name = new char[length];
-        strcpy(user->name,pRow[1].getString().c_str());
-        user->name[length-1]='\0';
-
-        length=pRow[2].getString().length()+1;
-        user->address=new char[length];
-        strcpy(user->address,pRow[2].getString().c_str());
-        user->address[length-1]='\0';
-
-        length=pRow[3].getString().length()+1;
-        user->sex=new char[length];
-        strcpy(user->sex,pRow[3].getString().c_str());
-        user->sex[length-1]='\0';
-
-        length=pRow[4].getString().length()+1;
-        user->create_time=new char[length];
-        strcpy(user->create_time,pRow[4].getString().c_str());
-        user->create_time[length-1]='\0';
-
-        user->fans_num=pRow[5].getInt32();
-		user->article_num = pRow[6].getInt32();
-
-	    res->endQuery();
-        delete res;
-        return user;
-    }
-    return NULL;
-}
-User* query_user_name(char* name)//需要返回数组
-{
-    //根据user_id获取个人信息，非本人信息
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str=new char[200];
-    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where name=%s;",name);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        User* user=new User;
-        //只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-		user->user_id=pRow[0].getInt32();
-        
-		length=pRow[1].getString().length()+1;
-        user->name = new char[length];
-        strcpy(user->name,pRow[1].getString().c_str());
-        user->name[length-1]='\0';
-
-        length=pRow[2].getString().length()+1;
-        user->address=new char[length];
-        strcpy(user->address,pRow[2].getString().c_str());
-        user->address[length-1]='\0';
-
-        length=pRow[3].getString().length()+1;
-        user->sex=new char[length];
-        strcpy(user->sex,pRow[3].getString().c_str());
-        user->sex[length-1]='\0';
-
-        length=pRow[4].getString().length()+1;
-        user->create_time=new char[length];
-        strcpy(user->create_time,pRow[4].getString().c_str());
-        user->create_time[length-1]='\0';
-
-        user->fans_num=pRow[5].getInt32();
-		user->article_num = pRow[6].getInt32();
-
-	    res->endQuery();
-        delete res;
-        return user;
-    }
-    return NULL;
-}
-
-User_Relation* query_user_rel(int user_id)
-{
-    //要返回数组
-    //根据user_id获取个人本人关注的用户的id
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id,rel_user_id from users_rel_t where user_id=%d;",user_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        printf("RowCount=%lu,FieldCount=%u\n",res->getRowCount(),res->getFieldCount());
-        User_Relation* user_rel=new User_Relation;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-		user_rel->user_id=pRow[0].getInt32();
-        user_rel->rel_user_id=pRow[1].getInt32();
-	    res->endQuery();
-        delete res;
-        return user_rel;
-    }
-    return NULL;
-}
-Group* query_group(int user_id)
-{
-    //根据user_id获取个人目录的组信息
-        //要返回数组
-    //根据user_id获取个人本人关注的用户的id
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        Group* group=new Group;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-	    res->endQuery();
-        delete res;
-        return group;
-    }
-    return NULL;
-
-}
-Article* query_article_title(int user_id)
-{
-    //返回名字数组
-    //根据user_id获取个人的文章名，用于构建目录，在点击时在读取文章
-        //根据user_id获取个人目录的组信息
-        //要返回数组
-    //根据user_id获取个人本人关注的用户的id
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        Article* article=new Article;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-	    res->endQuery();
-        delete res;
-        return article;
-    }
-    return NULL;
-}
-Article* query_article(int art_id)
-{
-    //根据文章id获取个人的文章信息
-        //根据user_id获取个人目录的组信息
-        //要返回数组
-    //根据user_id获取个人本人关注的用户的id
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",art_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        Article* article=new Article;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-	    res->endQuery();
-        delete res;
-        return article;
-    }
-    return NULL;
-}
-Comment* query_comment(int art_id)
-{
-    //根据文章id获取评论/回答
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",art_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        Comment* comment=new Comment;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-	    res->endQuery();
-        delete res;
-        return comment;
-    }
-    return NULL;
-}
-Collect* query_collect(int user_id)
-{
-    //根据用户id获取个人收藏文章id
-    QueryResult* res=NULL;
-    //根据用户密码，获取个人信息，返回个人信息id等，本人
-    char* str = new char[200];
-    snprintf(str,200,"select user_id，rel_user_id from users_rel_t where user_id=%d;",user_id);
-    CMysql* mysql=get_mysql_handler();
-    if(mysql==NULL)
-        return NULL;
-    res=mysql->query(str);
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
-    {
-        Collect* collect=new Collect;
-        //不只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-        printf("length=%d",length);
-	    res->endQuery();
-        delete res;
-        return collect;
-    }
-    return NULL;
-}
+//修改的sql语句组织较繁琐，只支持修改user、group、article，其他只支持增删。
 Status modify_user(User *user)
 {
+    if(user->user_id==-1)
+        return MODIFY_ERROR;
+    int flag=0;//,
     char* str=new char[100];
 	snprintf(str,100,"update user_t set");
     if(user==NULL)
         return MODIFY_ERROR;
     if(user->name!=NULL)
-        snprintf(str,100,"%s name=%s",str,user->name);
+    {
+        //把名字传来吧，“,”的逻辑太多了
+        snprintf(str+strlen(str),100,"%s name=%s",str,user->name);
+        flag=0;
+    }
     if(user->sex!=NULL)
-        snprintf(str,100,"%s,sex=%s",str,user->sex);
+        snprintf(str+strlen(str),100,"%s,sex=%s",str,user->sex);
     if(user->address!=NULL)
-        snprintf(str,100,"%s,address=%s",str,user->address);
+        snprintf(str+strlen(str),100,"%s,address=%s",str,user->address);
     if(user->password!=NULL)
-        snprintf(str,100,"%s,password=%s",str,user->password);
+        snprintf(str+strlen(str),100,"%s,password=%s",str,user->password);
+    snprintf(str+strlen(str),100," where user_id=%d;",user->user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
@@ -754,22 +844,8 @@ Status modify_user(User *user)
     delete[] str;
     return SUCCESS;
 }
-Status modify_user_rel(User_Relation *user_relation)
-{
-    char* str = new char[100];
-    
-	snprintf(str, 100, "update user_t set");
-    CMysql* m_mysql=get_mysql_handler();
-    if(m_mysql==NULL)
-        return GET_MYSQL_ERROR;
-    if(m_mysql->execute(str)==false)//插入数据,已经有了
-	{
-		cout << "data modify error" << endl;
-		return MODIFY_ERROR;
-	}
-    delete[] str;
-    return SUCCESS;
-}
+//user_rel不需要修改，只有增删
+//group可能修改父节点，名字
 Status modify_group(Group *group)
 {
     char* str = new char[100];
@@ -802,38 +878,13 @@ Status modify_article(Article *article)
     delete[] str;
     return SUCCESS;
 }
-Status modify_comment(Comment *comment)
-{
-    char* str = new char[100];
-    
-	snprintf(str, 100, "update user_t set");
-    CMysql* m_mysql=get_mysql_handler();
-    if(m_mysql==NULL)
-        return GET_MYSQL_ERROR;
-    if(m_mysql->execute(str)==false)//插入数据,已经有了
-	{
-		cout << "data modify error" << endl;
-		return MODIFY_ERROR;
-	}
-    delete[] str;
-    return SUCCESS;
-}
-Status modify_collect(Collect *collect)
-{
-    char* str = new char[100];
-    
-	snprintf(str, 100, "update user_t set");
-    CMysql* m_mysql=get_mysql_handler();
-    if(m_mysql==NULL)
-        return GET_MYSQL_ERROR;
-    if(m_mysql->execute(str)==false)//插入数据,已经有了
-	{
-		cout << "data modify error" << endl;
-		return MODIFY_ERROR;
-	}
-    delete[] str;
-    return SUCCESS;
-}
+
+//comment不需要修改，只需要删除和增加
+
+//收藏不需要修改，只支持增删,也许以后有树形结构，再添加修改功能
+
+
+//删除用户，删除可能有依赖，在删除前，将其依赖删除。可设计一个图，广度优先。
 Status delete_user(int user_id)
 {
     char* str = new char[100];
@@ -850,35 +901,37 @@ Status delete_user(int user_id)
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_user_rel(int user_id,int user_rel_id)
 {
     //根据用户id和关注者id，删除关注关系
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from users_rel_t where user_id=%d and rel_user_id=%d",user_id,user_rel_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "user_rel data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
     return SUCCESS;
 }
+
 Status delete_all_user_rel(int user_id)
 {
     //根据用户id删除其所有关注
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from user_rel where user_id=%d",user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "user_rel data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -888,14 +941,13 @@ Status delete_group(int user_id,int group_id)
 {
     //删除某个分组
     char* str = new char[100];
-    
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from group_t where user_id=%d and group_id=%d",user_id,group_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "group data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -906,13 +958,13 @@ Status delete_all_group(int user_id)
     //删除个人所有分组
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from group_t where user_id=%d",user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "group data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -924,13 +976,13 @@ Status delete_article(int art_id)
     //删除谋篇文章
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    snprintf(str,100,"delete from article_t where art_id=%d",art_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "article data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -941,14 +993,13 @@ Status delete_all_article(int user_id)
 {
     //删除个人所有文章
     char* str = new char[100];
-    
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from article_t where user_id=%d",user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "article data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -959,14 +1010,13 @@ Status delete_comment(int art_id,int comment_id)
 {
     //删除某条评论
     char* str = new char[100];
-    
-    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    snprintf(str,100,"delete from comment_t where art_id=%d and com_id=%d",art_id,comment_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "comment data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -978,13 +1028,13 @@ Status delete_comment_all(int art_id)
     //删除该文章所有评论
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",art_id);
+    snprintf(str,100,"delete from comment_t where art_id=%d",art_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "comment data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -995,14 +1045,13 @@ Status delete_collect(int user_id,int art_id)
 {
     //删除个人的某个收藏
     char* str = new char[100];
-    
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from collect_t where user_id=%d and art_id=%d",user_id,art_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "collect data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
@@ -1014,15 +1063,33 @@ Status delete_collect_all(int user_id)
     //删除个人所有收藏
     char* str = new char[100];
     
-    snprintf(str,100,"delete from user_t where user_id=%d",user_id);
+    snprintf(str,100,"delete from collect_t where user_id=%d",user_id);
     CMysql* m_mysql=get_mysql_handler();
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "collect data delete error" << endl;
 		return MODIFY_ERROR;
 	}
     delete[] str;
     return SUCCESS;
 }
+
+//可以记录一下j2p的，再p2j的，再反过来
+
+//要求能够json中的数组转数组，并提取长度
+
+//结构体数组转json数组，不必提取长度
+
+//另外insert里的sprinf是否使用str+strlen(str)作为第一个参数更好，否则插入文章时浪费太多内存
+
+//明天解决这两个问题，后端更加能够使用，并连接qt，在qt中接收实际字符串，解析协议，并接入cJSON
+
+// 2  提取结构体，并用于登录，然后再做注册功能，查询关注、收藏，个人信息。论文第二章简单写一些，ppt简单制作
+
+// 3  中期检查后能够查询文章名，再文章内容，做出qt界面的点击文章名跳转，是否要做数据模型以存储id，而显示名字？
+
+// 3  后端目前只支持一个连接，后续需要创建线程池，数据库连接池，并设计thread类，能过支持多链接。
+
+// 3  再之后可以将C重构为C++，再有时间可以考虑event类型、后端日志，前端界面其他功能。

@@ -3,51 +3,82 @@ void test_s2j();
 void test_j2s();
 
 //将结构体转化为json字符串
-char* struct2json(void* obj,type type)
+char* struct2json(void* obj,type type,int length)
 {
     if(obj==NULL)
         return NULL;
     char* str=NULL;
+    cJSON *json_obj,*json;
+    if(length>1)
+        json_obj=cJSON_CreateArray();
+    else
+        json_obj=cJSON_CreateObject();
+    int len=0;
+    json=json_obj;
     switch(type)
     {
         case USER:
         {
             User* user=(User*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(user->user_id!=-1)
-                cJSON_AddNumberToObject(json_obj,"user_id",user->user_id);
-            if(user->name!=NULL)
-            cJSON_AddStringToObject(json_obj,"name",user->name);
-            if(user->address!=NULL)
-                cJSON_AddStringToObject(json_obj,"address",user->address);
-            if(user->sex!=NULL)
-                cJSON_AddStringToObject(json_obj,"sex",user->sex);
-            if(user->create_time!=NULL)
-            cJSON_AddStringToObject(json_obj,"create_time",user->create_time);
-            if(user->article_num!=-1)
-            cJSON_AddNumberToObject(json_obj,"article_num",user->article_num);
-            if(user->fans_num!=-1)
-            cJSON_AddNumberToObject(json_obj,"fans_num",user->fans_num);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(user->user_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"user_id",user->user_id);
+                if(user->name!=NULL)
+                cJSON_AddStringToObject(json_obj,"name",user->name);
+                if(user->address!=NULL)
+                    cJSON_AddStringToObject(json_obj,"address",user->address);
+                if(user->sex!=NULL)
+                    cJSON_AddStringToObject(json_obj,"sex",user->sex);
+                if(user->create_time!=NULL)
+                cJSON_AddStringToObject(json_obj,"create_time",user->create_time);
+                if(user->article_num!=-1)
+                cJSON_AddNumberToObject(json_obj,"article_num",user->article_num);
+                if(user->fans_num!=-1)
+                cJSON_AddNumberToObject(json_obj,"fans_num",user->fans_num);
+                if(user->account!=NULL)
+                cJSON_AddStringToObject(json_obj,"account",user->account);
+                if(user->password!=NULL)
+                cJSON_AddStringToObject(json_obj,"password",user->password);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    user++;
+                }
+                len++;
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
             }
-            if(json_obj)
-                cJSON_Delete(json_obj);
+            if(json)
+                cJSON_Delete(json);
             break;
         }
         case USER_REL:
         {
             User_Relation* rel=(User_Relation*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(rel->user_id!=-1)
-                cJSON_AddNumberToObject(json_obj,"user_id",rel->user_id);
-            if(rel->rel_user_id!=-1)
-                cJSON_AddNumberToObject(json_obj,"rel_user_id",rel->rel_user_id);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(rel->user_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"user_id",rel->user_id);
+                if(rel->rel_user_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"rel_user_id",rel->rel_user_id);
+                if(rel->name!=NULL)
+                    cJSON_AddStringToObject(json_obj,"name",rel->name);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    rel++;
+                }
+                len++;
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
@@ -59,17 +90,26 @@ char* struct2json(void* obj,type type)
         case GROUP:
         {
             Group* group=(Group*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(group->user_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"user_id",group->user_id);
-            if(group->group_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"group_id",group->group_id);
-            if(group->group_name!=NULL)
-            cJSON_AddStringToObject(json_obj,"group_name",group->group_name);
-            if(group->father_group_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"father_group_id",group->father_group_id);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(group->user_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"user_id",group->user_id);
+                if(group->group_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"group_id",group->group_id);
+                if(group->group_name!=NULL)
+                cJSON_AddStringToObject(json_obj,"group_name",group->group_name);
+                if(group->father_group_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"father_group_id",group->father_group_id);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    group++;
+                }
+                len++;
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
@@ -81,25 +121,34 @@ char* struct2json(void* obj,type type)
         case ARTICLE:
         {
             Article* article=(Article*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(article->user_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"user_id",article->user_id);
-            if(article->art_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"art_id",article->art_id);
-            if(article->title!=NULL)
-            cJSON_AddStringToObject(json_obj,"title",article->title);
-            if(article->text!=NULL)
-            cJSON_AddStringToObject(json_obj,"text",article->text);
-            if(article->upvote_num!=-1)
-            cJSON_AddNumberToObject(json_obj,"upvote_num",article->upvote_num);
-            if(article->create_time!=NULL)
-            cJSON_AddStringToObject(json_obj,"create_time",article->create_time);
-            if(article->modify_time!=NULL)
-            cJSON_AddStringToObject(json_obj,"modify_time",article->modify_time);
-            if(article->group_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"group_id",article->group_id);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(article->user_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"user_id",article->user_id);
+                if(article->art_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"art_id",article->art_id);
+                if(article->title!=NULL)
+                cJSON_AddStringToObject(json_obj,"title",article->title);
+                if(article->text!=NULL)
+                cJSON_AddStringToObject(json_obj,"text",article->text);
+                if(article->upvote_num!=-1)
+                cJSON_AddNumberToObject(json_obj,"upvote_num",article->upvote_num);
+                if(article->create_time!=NULL)
+                cJSON_AddStringToObject(json_obj,"create_time",article->create_time);
+                if(article->modify_time!=NULL)
+                cJSON_AddStringToObject(json_obj,"modify_time",article->modify_time);
+                if(article->group_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"group_id",article->group_id);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    article++;
+                }
+                len++;
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
@@ -111,21 +160,31 @@ char* struct2json(void* obj,type type)
         case COMMENT:
         {
             Comment* comment=(Comment*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(comment->art_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"art_id",comment->art_id);
-            if(comment->com_user_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"com_user_id",comment->com_user_id);
-            if(comment->comment_id!=-1)
-            cJSON_AddNumberToObject(json_obj,"comment_id",comment->comment_id);
-            if(comment->text!=NULL)
-            cJSON_AddStringToObject(json_obj,"comment_text",comment->text);
-            if(comment->upvote_num!=-1)
-            cJSON_AddNumberToObject(json_obj,"upvote_num",comment->upvote_num);
-            if(comment->is_question!=-1)
-            cJSON_AddNumberToObject(json_obj,"is_question",comment->is_question);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(comment->art_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"art_id",comment->art_id);
+                if(comment->com_user_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"com_user_id",comment->com_user_id);
+                if(comment->comment_id!=-1)
+                cJSON_AddNumberToObject(json_obj,"comment_id",comment->comment_id);
+                if(comment->text!=NULL)
+                cJSON_AddStringToObject(json_obj,"comment_text",comment->text);
+                if(comment->upvote_num!=-1)
+                cJSON_AddNumberToObject(json_obj,"upvote_num",comment->upvote_num);
+                if(comment->is_question!=-1)
+                cJSON_AddNumberToObject(json_obj,"is_question",comment->is_question);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    comment++;
+                }
+                len++;
+
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
@@ -137,15 +196,27 @@ char* struct2json(void* obj,type type)
         case COLLECT:
         {
             Collect* collect=(Collect*)obj;
-            cJSON* json_obj;
-            json_obj=cJSON_CreateObject();
-            if(collect->user_id!=-1)
-                cJSON_AddNumberToObject(json_obj,"user_id",collect->user_id);
-            if(collect->collect_art_id!=-1)
-                cJSON_AddNumberToObject(json_obj,"collect_art_id",collect->collect_art_id);
-            if(collect->collect_num!=-1)
-                cJSON_AddNumberToObject(json_obj,"collect_num",collect->collect_num);
-            str=cJSON_Print(json_obj);
+            while(len<length)
+            {
+                if(length>1)
+                    json_obj=cJSON_CreateObject();//创建数组中需要的对象
+                if(collect->user_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"user_id",collect->user_id);
+                if(collect->collect_art_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"collect_art_id",collect->collect_art_id);
+                if(collect->collect_num!=-1)
+                    cJSON_AddNumberToObject(json_obj,"collect_num",collect->collect_num);
+                if(collect->art_name!=NULL)
+                    cJSON_AddStringToObject(json_obj,"art_name",collect->art_name);
+                if(length>1)
+                {
+                    cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
+                    collect++;
+                }
+                len++;
+
+            }
+            str=cJSON_Print(json);
             {
                 if(str)
                     printf("%s\n",str);
@@ -160,202 +231,271 @@ char* struct2json(void* obj,type type)
     return str;
 }
 
-//将json内容转化为结构体
-void* json2struct(char* json_str,type type)
+//将json内容转化为结构体，数组如何？如何知道length
+void* json2struct(char* json_str,type type,int *size)
 {
-    cJSON *json,*json_temp;
+    cJSON *json,*json_temp,*json_array;
     json=cJSON_Parse(json_str);
+
+    //printf("is_array=%d\n",cJSON_IsArray(json));
+    int length=1;
+    int len=0;
+    *size=1;
+    json_array=json;
+    if(cJSON_IsArray(json))
+    {
+        length=cJSON_GetArraySize(json);
+        *size=length;
+    }
     switch(type)
     {
         case USER:
         {
-            User *user=new User;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            User* user=new User[length];
+            User* temp=user;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                user->user_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"user_id");
+                    user->user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"name"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"name");
+                    user->name=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"address"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"address");
+                    user->address=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"sex"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"sex");
+                    user->sex=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"create_time"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"create_time");
+                    user->create_time=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"article_num"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"article_num");
+                    user->article_num=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"fans_num"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"fans_num");
+                    user->fans_num=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"account"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"account");
+                    user->account=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"password"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"password");
+                    user->password=json_temp->valuestring;
+                }
+                user++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"name"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"name");
-                user->name=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"address"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"address");
-                user->address=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"sex"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"sex");
-                user->sex=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"create_time"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"create_time");
-                user->create_time=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"article_num"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"article_num");
-                user->article_num=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"fans_num"))
-            {    
-                json_temp=cJSON_GetObjectItem(json,"fans_num");
-                user->fans_num=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"account"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"account");
-                user->account=json_temp->valuestring; 
-            }
-            if(cJSON_HasObjectItem(json,"password"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"password");
-                user->password=json_temp->valuestring;
-            }
-            return user;
+            return temp;
         }
         case USER_REL:
         {
-            User_Relation *user_rel=new User_Relation;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            User_Relation *user_rel=new User_Relation[length];
+            User_Relation *temp=user_rel;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                user_rel->user_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"user_id");
+                    user_rel->user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"rel_user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"rel_user_id");
+                    user_rel->rel_user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"name"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"name");
+                    user_rel->name=json_temp->valuestring;
+                }
+                user_rel++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"rel_user_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"rel_user_id");
-                user_rel->rel_user_id=json_temp->valueint;
-            }
-            return user_rel;
+            return temp;
         }
         case GROUP:
         {
-            Group *group=new Group;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            Group *group=new Group[length];
+            Group *temp=group;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                group->user_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"user_id");
+                    group->user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"group_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"group_id");
+                    group->group_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"father_group"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"father_group");
+                    group->father_group_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"group_name"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"group_name");
+                    group->group_name=json_temp->valuestring;
+                }
+                group++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"group_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"group_id");
-                group->group_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"father_group"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"father_group");
-                group->father_group_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"group_name"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"group_name");
-                group->group_name=json_temp->valuestring;
-            }
-            return group;
+            return temp;
         }
         case ARTICLE:
         {
-            Article *article=new Article;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            Article *article=new Article[length];
+            Article *temp=article;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                article->user_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"user_id");
+                    article->user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"art_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"art_id");
+                    article->art_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"title"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"title");
+                    article->title=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"text"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"text");
+                    article->text=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"upvote_num"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"upvote_num");
+                    article->upvote_num=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"create_time"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"create_time");
+                    article->create_time=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"modify_time"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"modify_time");
+                    article->modify_time=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"group_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"group_id");
+                    article->group_id=json_temp->valueint;
+                }
+                article++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"art_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"art_id");
-                article->art_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"title"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"title");
-                article->title=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"text"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"text");
-                article->text=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"upvote_num"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"upvote_num");
-                article->upvote_num=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"create_time"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"create_time");
-                article->create_time=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"modify_time"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"modify_time");
-                article->modify_time=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"group_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"group_id");
-                article->group_id=json_temp->valueint;
-            }
-            return article;
+            return temp;
         }
         case COMMENT:
         {
-            Comment *comment=new Comment;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            Comment *comment=new Comment[length];
+            Comment *temp=comment;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                comment->art_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"art_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"art_id");
+                    comment->art_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"com_user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"com_user_id");
+                    comment->com_user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"comment_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"comment_id");
+                    comment->comment_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"comment_text"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"comment_text");
+                    comment->text=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"upvote_num"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"upvote_num");
+                    comment->upvote_num=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"is_question"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"is_question");
+                    comment->is_question=json_temp->valueint;
+                }
+                comment++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"com_user_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"com_user_id");
-                comment->com_user_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"comment_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"comment_id");
-                comment->comment_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"comment_text"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"comment_text");
-                comment->text=json_temp->valuestring;
-            }
-            if(cJSON_HasObjectItem(json,"upvote_num"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"upvote_num");
-                comment->upvote_num=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"is_question"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"is_question");
-                comment->is_question=json_temp->valueint;
-            }
-            return comment;
+            return temp;
         }
         case COLLECT:
         {
-            Collect *collect=new Collect;
-            if(cJSON_HasObjectItem(json,"user_id"))
+            Collect *collect=new Collect[length];
+            Collect *temp=collect;
+            while(len<length)
             {
-                json_temp=cJSON_GetObjectItem(json,"user_id");
-                collect->user_id=json_temp->valueint;
+                if(length>1)
+                    json_array=cJSON_GetArrayItem(json,len);
+                if(cJSON_HasObjectItem(json_array,"user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"user_id");
+                    collect->user_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"collect_art_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"collect_art_id");
+                    collect->collect_art_id=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"collect_num"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"collect_num");
+                    collect->collect_num=json_temp->valueint;
+                }
+                if(cJSON_HasObjectItem(json_array,"art_name"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"art_name");
+                    collect->art_name=json_temp->valuestring;
+                }
+                collect++;
+                len++;
             }
-            if(cJSON_HasObjectItem(json,"collect_art_id"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"collect_art_id");
-                collect->collect_art_id=json_temp->valueint;
-            }
-            if(cJSON_HasObjectItem(json,"collect_num"))
-            {
-                json_temp=cJSON_GetObjectItem(json,"collect_num");
-                collect->collect_num=json_temp->valueint;
-            }
-            return collect;      
+            return temp;
         }
     }
     return NULL;
@@ -380,16 +520,16 @@ void test_s2j()
     strcpy(user->account,"z123");
     user->password=new char[5];
     strcpy(user->password,"z123");
-    str=struct2json(user,USER);
-    
-    User* p=(User*)json2struct(str,USER);
+    str=struct2json(user,USER,1);
+    int len_t;
+    User* p=(User*)json2struct(str,USER,&len_t);
     printf("user_id=%d,name=%s,address=%s,sex=%s,ctime=%s,art_num=%d,fans_num=%d\n",p->user_id,p->name,p->address,p->sex,p->create_time,p->article_num,p->fans_num);
 
 
     User_Relation *rel=new User_Relation;
     rel->rel_user_id=3;
     rel->user_id=2;
-    struct2json(rel,USER_REL);
+    struct2json(rel,USER_REL,1);
 
 
     Group* group=new Group;
@@ -398,7 +538,7 @@ void test_s2j()
     group->father_group_id=0;
     group->group_name=new char[10];
     strcpy(group->group_name,"group3");
-    str=struct2json(group,GROUP);
+    str=struct2json(group,GROUP,1);
 
     Article* article=new Article;
     article->user_id=1;
@@ -412,7 +552,7 @@ void test_s2j()
     article->modify_time=new char[20];
     strcpy(article->modify_time,"2021-04-14 01:53:56");
     article->upvote_num=0;
-    str=struct2json(article,ARTICLE);
+    str=struct2json(article,ARTICLE,1);
 
     Comment* comment=new Comment;
     comment->comment_id=3;
@@ -422,21 +562,22 @@ void test_s2j()
     strcpy(comment->text,"xie de zhen hao");
     comment->upvote_num=0;
     comment->is_question=0;
-    str=struct2json(comment,COMMENT);
+    str=struct2json(comment,COMMENT,1);
 
     Collect* collect=new Collect;
     collect->user_id=1;
     collect->collect_art_id=3;
     collect->collect_num=1;
-    str=struct2json(collect,COLLECT);
-    Collect *collect_cp=(Collect*)json2struct(str,COLLECT);
+    str=struct2json(collect,COLLECT,1);
+    Collect *collect_cp=(Collect*)json2struct(str,COLLECT,&len_t);
     printf("user_id=%d,collect_art_id=%d,collect_num=%d\n",collect_cp->user_id,collect_cp->collect_art_id,collect_cp->collect_num);
 }
 void test_j2s()
 {
+    int len_t;
     char* temp=new char[200];
     strcpy(temp,"{\"user_id\":      0,\"name\": \"robot\",\"address\":      \"NULL\",\"sex\":  \"男\",\"create_time\":  \"2021-04-14 01:53:56\",\"article_num\":  0}");
-    User* p=(User*)json2struct(temp,USER);
+    User* p=(User*)json2struct(temp,USER,&len_t);
     printf("user_id=%d name=%s address=%s sex=%s ctime=%s art_num=%d fans_num=%d\n",p->user_id,p->name,p->address,p->sex,p->create_time,p->article_num,p->fans_num);
 }
 
