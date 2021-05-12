@@ -12,7 +12,7 @@
 TEST(insert_user, scene)
 {
 
-    Status Result=SUCCESS;
+    //Status Result=SUCCESS;
 /*    User *p =new User;
     p->name=new char[10];
     strcpy(p->name,"robot");

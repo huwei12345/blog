@@ -19,13 +19,14 @@
 
 #define BUFFER_SIZE 1024
 #define CONTENT_SIZE 1024*1024
+#define PROTO_SIZE 12
 #define EPOLLNUM 1024
 #define trans4(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))|((x[2]<<16)&(0x00ff0000))|((x[3]<<24)&(0xff000000))//
 #define trans2(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))//
 
 enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_collect_t,insert_comment_t,insert_user_rel_t,
              query_user_t,query_user_list_t,query_user_rel_t,query_user_rel_list_t,query_group_t,query_group_list_t,
-             query_article_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_list_t,
+             query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_list_t,
              modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
              delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
              test};
@@ -40,7 +41,7 @@ enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_coll
 #define BUFFER_SIZE 1024
 char buf[BUFFER_SIZE];
 int len=0;//当前读到buf长度
-int length=12;//总请求长度
+int length=PROTO_SIZE;//总请求长度
 /*
 void add_epoll_fd(int client_fd)
 {
@@ -83,39 +84,39 @@ struct Result
     char* json;
     char* protocol;
 };
-char* get_request(int fd)//获取请求并处理,不读到12不返回的
+char* get_request(int fd)//获取请求并处理,不读到PROTO_SIZE不返回的
 {
     char* buffer=new char[1000];
     buffer[0]='\0';
     int idx=-1;
     int has_read=0;
-    int length=12;
+    int length=PROTO_SIZE;
     while(has_read<length)
     {
         int n=read(fd,buffer+has_read,length-has_read);
         has_read+=n;
-        if(has_read>=12&&idx==-1)
+        if(has_read>=PROTO_SIZE&&idx==-1)
         {
             //获取长度
             idx=1;
             length=trans4((buffer));
         }
     }
-    if(length-12==0)
-        buffer[12]='\0';
+    if(length-PROTO_SIZE==0)
+        buffer[PROTO_SIZE]='\0';
     return buffer;
 }
 Result* packet_response(char *str,int status,int type)
 {
-    //返回肯定是12+strlen（json）,json中没有\0
-    char* result=new char[12];
+    //返回肯定是PROTO_SIZE+strlen（json）,json中没有\0
+    char* result=new char[PROTO_SIZE];
     Result *res=new Result;
     //将结果打包
     if(status==FAILURE||status==INSERT_ERROR||status==GET_MYSQL_ERROR||status==MODIFY_ERROR)
     {
         //错误，无数据
         res->json=NULL;
-        unsigned int length=12;
+        unsigned int length=PROTO_SIZE;
         if(str!=NULL)
             length+=strlen(str);//包总长度
         memcpy(result,&length,4);
@@ -130,7 +131,7 @@ Result* packet_response(char *str,int status,int type)
         res->json=str;
         res->protocol=result;
         int CRC=4;//CRC校验，包括json+4个字段,暂无
-        unsigned int length=12;
+        unsigned int length=PROTO_SIZE;
         if(str!=NULL)
             length+=strlen(str);//包总长度
         memcpy(result,&length,4);
@@ -146,28 +147,12 @@ Result* packet_response(char *str,int status,int type)
 //buffer表示传来的请求，
 struct Result* process_request(char* buffer)
 {
-    /*
-    Result *result=new Result;
-    result->json=new char[20];
-    memset(result->json,'\0',20);
-    strcpy(result->json,"hello world");
-    result->protocol=new char[12];
-    int x=1;
-    memcpy(result->protocol,&x,4);
-    memcpy(result->protocol+4,&x,4);
-    memcpy(result->protocol+8,&x,4);
-    return result;
-    */
-    int length=trans4((buffer));//len-12==0??????buffer[len-12]=='\0'??
-    printf("length=%d\n",length);
+    int length=trans4((buffer));
     int status=trans2((buffer+4));
-    printf("status=%d\n",status);
     int type=trans2((buffer+6));
-    printf("type=%d\n",type);
     unsigned int CRC=trans4((buffer));
-    printf("CRC=%d\n",CRC);
-    char* json=buffer+12;
-    printf("json=%s\n",json);
+    char* json=buffer+PROTO_SIZE;
+    printf("length=%d,status=%d,type=%d,CRC=%d,json=%s\n",length,status,type,CRC,json);
     //int ret=assert_crc(buffer,CRC);crc检验
     struct Result* response=NULL;
     int state=0;
@@ -183,10 +168,12 @@ struct Result* process_request(char* buffer)
                 User* user_new=NULL;
                 printf("account=%s,password=%s",user->account,user->password);
                 user_new=query_my_user(user->account,user->password);
+                delete user;
                 //printf("state=%d\n",state);
                 if(user_new!=NULL)
                     state=SUCCESS;
                 str=struct2json(user_new,USER,1);
+                delete[] user_new;
                 response=packet_response(str,state,type);
                 break;
             }
@@ -203,9 +190,12 @@ struct Result* process_request(char* buffer)
             {
                 User* user=(User*)json2struct(json,USER,&len_t);
                 int id=user->user_id;
-                user=query_user(id);//查询然后strcut2json 然后协议
-                if(user!=NULL)
+                User* result=query_user(id);//查询然后strcut2json 然后协议
+                delete user;
+                if(result!=NULL)
                     state=SUCCESS;
+                str=struct2json(result,USER_REL,len_t);
+                delete[] result;    
                 response=packet_response(str,state,type);
                 break;
             }
@@ -217,6 +207,7 @@ struct Result* process_request(char* buffer)
                 if(result!=NULL)
                     state=SUCCESS;
                 str=struct2json(result,USER_REL,len_t);
+                delete[] result;
                 response=packet_response(str,state,type);
                 break;
             }
@@ -228,6 +219,45 @@ struct Result* process_request(char* buffer)
                 if(result!=NULL)
                     state=SUCCESS;
                 str=struct2json(result,COLLECT,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_group_t:
+            {
+                Group* group=(Group*)json2struct(json,GROUP,&len_t);
+                Group* result=query_group(group->user_id,&len_t);
+                delete group;
+                if(result!=NULL)
+                    state=SUCCESS;
+                str=struct2json(result,GROUP,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_article_title_t:
+            {
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                Article* result=query_article_title(article->user_id,&len_t);
+                delete article;
+                if(result!=NULL)
+                    state=SUCCESS;
+                str=struct2json(result,ARTICLE,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_article_t:
+            {
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                Article* result=query_article(article->art_id);
+                delete article;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,ARTICLE,1);
+                delete[] result;
                 response=packet_response(str,state,type);
                 break;
             }
@@ -258,16 +288,17 @@ struct Result* process_request(char* buffer)
 
 int send_response(int fd,struct Result *result)
 {
+    //发送的时候没有带\0,可能有错
     int index=0;
     int length_t=0;
+    int len_t=0;
     if(result->protocol!=NULL)
-        while(length_t!=12)
+        while(len_t!=PROTO_SIZE)
         {
-            index=write(fd,result->protocol+length_t,12-length_t);
-            printf("send %d bytes\n",index);
+            index=write(fd,result->protocol+len_t,PROTO_SIZE-len_t);
             if(index<0)
             {
-                printf("send error,index=%d,errno=%d\n",index,errno);
+                printf("send error,ret=%d,errno=%d\n",index,errno);
                 return -1;
             }
             else if(index==0)
@@ -275,30 +306,40 @@ int send_response(int fd,struct Result *result)
                 printf("connect down\n");
                 return -1;
             }
-            length_t+=index;
+            else
+            {
+                printf("send %d bytes\n",index);
+                len_t+=index;
+            }
         }
     if(result->json!=NULL)
     {
         index=0;
-        int len_t=0;
+        len_t=0;
         length_t=strlen(result->json);
-        while(index!=length_t)
+        while(len_t!=length_t)
         {
             index=write(fd,result->json+len_t,length_t-len_t);
-            printf("send %d bytes\n",index);
             if(index<0)
+            {
+                printf("send error,ret=%d,errno=%d\n",index,errno);
                 return -1;
+            }
             else if(index==0)
             {
                 printf("connect down\n");
                 return -1;
             }
-            len_t+=index;
+            else
+            {
+                printf("send %d bytes\n",index);
+                len_t+=index;
+            }
         }
     }
     len=0;
-    length=12;
-    return length_t+12;
+    length=PROTO_SIZE;
+    return length_t+PROTO_SIZE;
 }
 
 
@@ -368,37 +409,6 @@ void addfd(int epollfd,int fd,bool enable_et)
     epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
     setnoblocking(fd);
 }
-void lt(epoll_event* events,int number,int epollfd,int listenfd)
-{
-    char buf[BUFFER_SIZE];
-    for(int i=0;i<number;i++)
-    {
-        int sockfd=events[i].data.fd;
-        if(sockfd==listenfd)
-        {
-            struct sockaddr_in client_address;
-            socklen_t client_addrlength=sizeof(client_address);
-            int connfd=accept(listenfd,(struct sockaddr*)&client_address,&client_addrlength);
-            addfd(epollfd,connfd,false);
-        }
-        else if(events[i].events&EPOLLIN)
-        {
-            printf("event trigger once\n");
-            memset(buf,'\0',BUFFER_SIZE);
-            int ret=recv(sockfd,buf,BUFFER_SIZE-1,0);
-            if(ret<=0)
-            {
-                close(sockfd);
-                continue;
-            }
-            printf("get %d bytes of content: %s\n",ret,buf);
-        }
-        else
-        {
-            printf("something else happened\n");
-        }
-    }
-}
 
 void et(epoll_event* events,int number,int epollfd,int listenfd)
 {
@@ -417,7 +427,7 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
             printf("event trigger once\n");
             while(len<length)
             {
-                int ret=recv(sockfd,buf+len,BUFFER_SIZE-1,0);
+                int ret=recv(sockfd,buf+len,length-len,0);
                 printf("ret=%d\n",ret);
 				if(ret<0)
                 {

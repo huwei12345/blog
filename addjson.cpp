@@ -353,9 +353,9 @@ void* json2struct(char* json_str,type type,int *size)
                     json_temp=cJSON_GetObjectItem(json_array,"group_id");
                     group->group_id=json_temp->valueint;
                 }
-                if(cJSON_HasObjectItem(json_array,"father_group"))
+                if(cJSON_HasObjectItem(json_array,"father_group_id"))
                 {
-                    json_temp=cJSON_GetObjectItem(json_array,"father_group");
+                    json_temp=cJSON_GetObjectItem(json_array,"father_group_id");
                     group->father_group_id=json_temp->valueint;
                 }
                 if(cJSON_HasObjectItem(json_array,"group_name"))
