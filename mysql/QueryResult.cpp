@@ -60,7 +60,7 @@ bool QueryResult::nextRow()
         {
             m_CurrentRow[i].m_bNULL = false;
             m_CurrentRow[i].setValue(row[i], ulFieldLength[i]);
-            printf("row[%d] = %s",i,row[i]);
+            //printf("row[%d] = %s",i,row[i]);调试用
         }
 
         m_CurrentRow[i].setName(m_FieldNames[i]);

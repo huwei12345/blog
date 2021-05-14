@@ -117,6 +117,7 @@ CMysql* get_mysql_handler();
 
 User* query_my_user(char* account,char* password);
 User* query_user(int user_id);
+int query_have_user_account(char* account);//不需要返回数组
 User_Relation* query_user_rel(int user_id,int* count);
 Group* query_group(int user_id,int* count);
 Article* query_article_title(int user_id,int* count);

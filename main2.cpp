@@ -117,8 +117,6 @@ Result* packet_response(char *str,int status,int type)
         //错误，无数据
         res->json=NULL;
         unsigned int length=PROTO_SIZE;
-        if(str!=NULL)
-            length+=strlen(str);//包总长度
         memcpy(result,&length,4);
         memcpy(result+4,&status,2);
         memcpy(result+6,&type,2);
@@ -128,7 +126,10 @@ Result* packet_response(char *str,int status,int type)
     }
     else
     {
-        res->json=str;
+        if(str!=NULL)
+            res->json=str;
+        else
+            res->json=NULL;
         res->protocol=result;
         int CRC=4;//CRC校验，包括json+4个字段,暂无
         unsigned int length=PROTO_SIZE;
@@ -175,15 +176,6 @@ struct Result* process_request(char* buffer)
                 str=struct2json(user_new,USER,1);
                 delete[] user_new;
                 response=packet_response(str,state,type);
-                break;
-            }
-            case insert_user_t:
-            {
-                printf("json=%s\n",json);
-                User* user=(User*)json2struct(json,USER,&len_t);
-                state=insert_user(user);
-                printf("state=%d\n",state);
-                response=packet_response(NULL,state,type);
                 break;
             }
             case query_user_t:
@@ -261,6 +253,34 @@ struct Result* process_request(char* buffer)
                 response=packet_response(str,state,type);
                 break;
             }
+            case query_comment_t:
+            {
+                Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
+                Comment* result=query_comment(comment->art_id,&len_t);
+                delete comment;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,COMMENT,1);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case insert_user_t:
+            {
+                printf("json=%s\n",json);
+                User* user=(User*)json2struct(json,USER,&len_t);
+                state=query_have_user_account(user->account);
+                if(state==0)
+                    state=insert_user(user);
+                else
+                    state=FAILURE;
+                delete user;
+                printf("state=%d\n",state);
+                response=packet_response(NULL,state,type);
+                break;
+            }
             case modify_user_t:
             {
                 User* user=new User;
@@ -269,6 +289,7 @@ struct Result* process_request(char* buffer)
                 response=packet_response(NULL,state,type);
                 break;
             }
+
             case delete_user_t:
             {
                 User* user=new User;
@@ -276,6 +297,7 @@ struct Result* process_request(char* buffer)
                 state=delete_user(user->user_id);
                 response=packet_response(NULL,state,type);
             }
+
             default:
                 break;
         }

@@ -75,7 +75,8 @@ User* query_my_user(char* account,char* password)
         return NULL;
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
@@ -130,7 +131,8 @@ User* query_user(int user_id)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
@@ -171,62 +173,30 @@ User* query_user(int user_id)
     }
     return NULL;
 }
-User* query_user_name(char* name)//不需要返回数组
+int query_have_user_account(char* account)//不需要返回数组
 {
     //根据user_id获取个人信息，非本人信息
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str=new char[200];
-    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where name=%s;",name);
+    snprintf(str,200,"SELECT 1 FROM users_t WHERE account=%s;",account);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
-        return NULL;
+        return 1;
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
-        return NULL;
-    else
+    if(res->getRowCount()==0)
     {
-        User* user=new User;
-        //只取第一个，应该也只有一个，在插入时保证账号唯一
-		Field* pRow = res->fetch();
-		if(pRow == NULL)
-			return NULL;
-        int length=0;
-		user->user_id=pRow[0].getInt32();
-        
-		length=pRow[1].getString().length()+1;
-        user->name = new char[length];
-        strcpy(user->name,pRow[1].getString().c_str());
-        user->name[length-1]='\0';
-
-        length=pRow[2].getString().length()+1;
-        user->address=new char[length];
-        strcpy(user->address,pRow[2].getString().c_str());
-        user->address[length-1]='\0';
-
-        length=pRow[3].getString().length()+1;
-        user->sex=new char[length];
-        strcpy(user->sex,pRow[3].getString().c_str());
-        user->sex[length-1]='\0';
-
-        length=pRow[4].getString().length()+1;
-        user->create_time=new char[length];
-        strcpy(user->create_time,pRow[4].getString().c_str());
-        user->create_time[length-1]='\0';
-
-        user->fans_num=pRow[5].getInt32();
-		user->article_num = pRow[6].getInt32();
-
-	    res->endQuery();
+        res->endQuery();
         delete res;
-        return user;
+        return 0;
     }
-    return NULL;
+    res->endQuery();
+    delete res;
+    return 1;
 }
-
 User_Relation* query_user_rel(int user_id,int* count)
 {
     //要返回数组
@@ -243,11 +213,11 @@ User_Relation* query_user_rel(int user_id,int* count)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
-        unsigned long int row_count=res->getRowCount();
         *count=row_count;
         unsigned long int i=0;
         User_Relation* user_rel=new User_Relation[res->getRowCount()];
@@ -290,11 +260,11 @@ Group* query_group(int user_id,int* count)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
-        unsigned long int row_count=res->getRowCount();
         *count=row_count;
         unsigned long int i=0;
         Group* group=new Group[res->getRowCount()];
@@ -337,11 +307,11 @@ Article* query_article_title(int user_id,int* count)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
-        unsigned long int row_count=res->getRowCount();
         *count=row_count;
         unsigned long int i=0;
         Article* article=new Article[res->getRowCount()];
@@ -394,7 +364,8 @@ Article* query_article(int art_id)//不需要返回数组
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
@@ -429,11 +400,11 @@ Comment* query_comment(int art_id,int* count)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
-        unsigned long int row_count=res->getRowCount();
         *count=row_count;
         unsigned long int i=0;
         Comment* comment=new Comment[res->getRowCount()];
@@ -445,14 +416,12 @@ Comment* query_comment(int art_id,int* count)
             comment[i].comment_id=pRow[0].getInt32();
             comment[i].art_id=pRow[1].getInt32();
             comment[i].com_user_id=pRow[2].getInt32();
-
             int length=pRow[3].getString().length()+1;
             comment[i].text=new char[length];
             strcpy(comment[i].text,pRow[3].getString().c_str());
             comment[i].text[length-1]='\0';
             comment[i].upvote_num=pRow[4].getInt32();
             comment[i].is_question=pRow[5].getInt32();
-
             if(!res->nextRow())
                 break;
             i++;
@@ -477,11 +446,11 @@ Collect* query_collect(int user_id,int* count)
     res=mysql->query(str);
     mysqlqueue[sql_index]=0;
     delete[] str;
-    if(res==NULL)//不太对，应该检查是否mysql内容返回为空
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
         return NULL;
     else
     {
-        unsigned long int row_count=res->getRowCount();
         *count=row_count;
         unsigned long int i=0;
         Collect* collect=new Collect[res->getRowCount()];
@@ -1079,7 +1048,6 @@ Status delete_comment_all(int art_id)
 {
     //删除该文章所有评论
     char* str = new char[100];
-    
     snprintf(str,100,"delete from comment_t where art_id=%d",art_id);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
