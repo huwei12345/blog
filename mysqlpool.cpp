@@ -205,7 +205,7 @@ User_Relation* query_user_rel(int user_id,int* count)
     *count=0;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[250];
-    snprintf(str,200," select users_t.user_id,rel_user_id,name from users_rel_t,users_t where users_rel_t.user_id=users_t.user_id and users_t.user_id=%d;",user_id);
+    snprintf(str,200," select users_t.user_id,rel_user_id,users_t.name from users_rel_t,users_t where users_rel_t.user_id=users_t.user_id and users_t.user_id=%d;",user_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -356,7 +356,7 @@ Article* query_article(int art_id)//不需要返回数组
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[200];
-    snprintf(str,200,"select art_id,article,upvote_num from article_t where art_id=%d;",art_id);
+    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id,article from article_t where art_id=%d;",art_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -375,12 +375,28 @@ Article* query_article(int art_id)//不需要返回数组
 		if(pRow == NULL)
 			return NULL;
         article->art_id=pRow[0].getInt32();
-        int length=pRow[1].getString().length()+1;
+        article->user_id=pRow[1].getInt32();
+        
+        int length=pRow[2].getString().length()+1;
+        article->title=new char[length];
+        strcpy(article->title,pRow[2].getString().c_str());
+        article->title[length-1]='\0';
+        article->upvote_num=pRow[3].getInt32();
+        
+        length=pRow[4].getString().length()+1;
+        article->create_time=new char[length];
+        strcpy(article->create_time,pRow[4].getString().c_str());
+        article->create_time[length-1]='\0';
+        length=pRow[5].getString().length()+1;
+        article->modify_time=new char[length];
+        strcpy(article->modify_time,pRow[5].getString().c_str());
+        article->modify_time[length-1]='\0';
+        article->group_id=pRow[6].getInt32();    
+        length=pRow[7].getString().length()+1;
         article->text=new char[length];
-        strcpy(article->text,pRow[1].getString().c_str());
+        strcpy(article->text,pRow[7].getString().c_str());
         article->text[length-1]='\0';
-        article->upvote_num=pRow[2].getInt32();
-	    res->endQuery();
+        res->endQuery();
         delete res;
         return article;
     }
@@ -501,11 +517,13 @@ Status insert_user(User *p)
     else
         snprintf(temp,100,",NULL");
     str=strcat(str,temp);
+    
     if(p->create_time!=NULL)
-        snprintf(temp,100,",'%s'",p->create_time);
+        snprintf(temp,100,",now()");
     else
-        snprintf(temp,100,",NULL");
+        snprintf(temp,100,",now()");
     str=strcat(str,temp);
+
     if(p->fans_num!=-1)
         snprintf(temp,100,",%d",p->fans_num);
     else
@@ -664,14 +682,15 @@ Status insert_article(Article *article)
         snprintf(temp,100,",0");
     str=strcat(str,temp);
     if(article->create_time!=NULL)
-        snprintf(temp,200,",'%s'",article->create_time);
+        snprintf(temp,200,",now()");
     else
-        snprintf(temp,200,",NULL");
+        snprintf(temp,200,",now()");
     str=strcat(str,temp);
+
     if(article->modify_time!=NULL)
-        snprintf(temp,200,",'%s'",article->modify_time);
+        snprintf(temp,200,",now()");
     else
-        snprintf(temp,200,",NULL");
+        snprintf(temp,200,",now()");
     str=strcat(str,temp);
     if(article->group_id!=-1)
         snprintf(temp,100,",%d",article->group_id);
@@ -711,7 +730,10 @@ Status insert_comment(Comment *comment)
     //%d,%d,%d,'%s',%d,%d);",
     //    comment->comment_id,comment->art_id,comment->com_user_id,comment->text,comment->upvote_num,comment->is_question    
     if(comment->comment_id!=-1)
+    {
         snprintf(temp,200,"%d",comment->comment_id);
+        str=strcat(str,temp);
+    }
     else
     {
         delete[] str;
