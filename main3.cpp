@@ -429,6 +429,8 @@ struct Result* process_request(char* buffer)
                 delete rel;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,USER_REL,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -441,6 +443,8 @@ struct Result* process_request(char* buffer)
                 delete collect;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,COLLECT,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -453,6 +457,8 @@ struct Result* process_request(char* buffer)
                 delete group;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,GROUP,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -465,6 +471,8 @@ struct Result* process_request(char* buffer)
                 delete article;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,ARTICLE,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -541,7 +549,14 @@ struct Result* process_request(char* buffer)
                 response=packet_response(NULL,state,type);
                 break;
             }
-
+            case modify_article_t:
+            {
+                User* user=new User;
+                user=(User*)json2struct(json,USER,&len_t);
+                state=modify_user(user);//查询然后strcut2json 然后协议
+                response=packet_response(NULL,state,type);
+                break;               
+            }
             case delete_user_t:
             {
                 User* user=new User;

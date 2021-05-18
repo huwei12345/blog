@@ -205,7 +205,7 @@ User_Relation* query_user_rel(int user_id,int* count)
     *count=0;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[250];
-    snprintf(str,200," select users_t.user_id,rel_user_id,users_t.name from users_rel_t,users_t where users_rel_t.user_id=users_t.user_id and users_t.user_id=%d;",user_id);
+    snprintf(str,200," select users_t.user_id,rel_user_id,users_t.name from users_rel_t,users_t where users_rel_t.rel_user_id=users_t.user_id and users_rel_t.user_id=%d;",user_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -454,7 +454,7 @@ Collect* query_collect(int user_id,int* count)
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[300];
-    snprintf(str,300,"select collect_t.user_id,collect_t.collect_art_id,collect_t.collect_num,article_t.title from collect_t,article_t where collect_t.user_id=%d and collect_t.collect_art_id=article_t.art_id;",user_id);
+    snprintf(str,300,"select collect_t.user_id,collect_t.collect_art_id,collect_t.collect_num,article_t.title,users_t.user_id from collect_t,article_t,users_t where collect_t.user_id=%d and collect_t.collect_art_id=article_t.art_id and users_t.user_id=article_t.user_id;",user_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -482,6 +482,7 @@ Collect* query_collect(int user_id,int* count)
             collect[i].art_name=new char[length];
             strcpy(collect[i].art_name,pRow[3].getString().c_str());
             collect[i].art_name[length-1]='\0';            
+            collect[i].art_user_id=pRow[4].getInt32();
             if(!res->nextRow())
                 break;
             i++;

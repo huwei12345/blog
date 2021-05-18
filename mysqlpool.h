@@ -104,11 +104,13 @@ public:
     Collect():user_id(-1),
                 collect_art_id(-1),
                 collect_num(-1),
+                art_user_id(-1),
                 art_name(NULL)
     {}
     int user_id;//用户id
     int collect_art_id;//被收藏文章/问题id
     int collect_num;//收藏顺序
+    int art_user_id;
     char* art_name;
 };
 

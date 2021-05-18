@@ -208,6 +208,8 @@ char* struct2json(void* obj,type type,int length)
                     cJSON_AddNumberToObject(json_obj,"collect_num",collect->collect_num);
                 if(collect->art_name!=NULL)
                     cJSON_AddStringToObject(json_obj,"art_name",collect->art_name);
+                if(collect->art_user_id!=-1)
+                    cJSON_AddNumberToObject(json_obj,"art_user_id",collect->art_user_id);
                 if(length>1)
                 {
                     cJSON_AddItemToArray(json,json_obj);//如果是数组，向其中添加对象
@@ -491,6 +493,11 @@ void* json2struct(char* json_str,type type,int *size)
                 {
                     json_temp=cJSON_GetObjectItem(json_array,"art_name");
                     collect->art_name=json_temp->valuestring;
+                }
+                if(cJSON_HasObjectItem(json_array,"art_user_id"))
+                {
+                    json_temp=cJSON_GetObjectItem(json_array,"art_user_id");
+                    collect->art_user_id=json_temp->valueint;
                 }
                 collect++;
                 len++;
