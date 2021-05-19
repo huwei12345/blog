@@ -25,8 +25,8 @@
 #define trans2(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))//
 
 enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_collect_t,insert_comment_t,insert_user_rel_t,
-             query_user_t,query_user_list_t,query_user_rel_t,query_user_rel_list_t,query_group_t,query_group_list_t,
-             query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_list_t,
+             query_user_t,query_user_list_t,query_user_rel_t,query_user_rel_simple_t,query_group_t,query_group_list_t,
+             query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_simple_t,
              modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
              delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
              test};
@@ -186,8 +186,8 @@ struct Result* process_request(char* buffer)
                 delete user;
                 if(result!=NULL)
                     state=SUCCESS;
-                str=struct2json(result,USER_REL,len_t);
-                delete[] result;    
+                str=struct2json(result,USER,len_t);
+                delete[] result;
                 response=packet_response(str,state,type);
                 break;
             }
@@ -198,6 +198,8 @@ struct Result* process_request(char* buffer)
                 delete rel;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,USER_REL,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -210,6 +212,8 @@ struct Result* process_request(char* buffer)
                 delete collect;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,COLLECT,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -222,6 +226,8 @@ struct Result* process_request(char* buffer)
                 delete group;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,GROUP,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -234,6 +240,8 @@ struct Result* process_request(char* buffer)
                 delete article;
                 if(result!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(result,ARTICLE,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
@@ -261,10 +269,59 @@ struct Result* process_request(char* buffer)
                 if(result!=NULL)
                     state=SUCCESS;
                 else
-                    state=FAILURE;
-                str=struct2json(result,COMMENT,1);
-                delete[] result;
+                    state=SUCCESS;
+                str=struct2json(result,COMMENT,len_t);
+                if(result!=NULL)
+                    delete[] result;
                 response=packet_response(str,state,type);
+                break;
+            }
+            case query_user_rel_simple_t:
+            {
+                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
+                state=query_user_rel_exist(rel);
+                response=packet_response(NULL,state,type);
+                delete rel;    
+                break;
+            }
+            case query_collect_simple_t:
+            {
+                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
+                state=query_user_col_exist(col);
+                response=packet_response(NULL,state,type);
+                delete col;    
+                break;
+            }
+            case insert_user_rel_t:
+            {
+                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
+                state=insert_user_rel(rel);
+                response=packet_response(NULL,state,type);
+                delete rel;
+                break;
+            }
+            case delete_user_rel_t:
+            {
+                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
+                state=delete_user_rel(rel->user_id,rel->rel_user_id);
+                response=packet_response(NULL,state,type);
+                delete rel;
+                break;
+            }
+            case insert_collect_t:
+            {
+                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
+                state=insert_collect(col);
+                response=packet_response(NULL,state,type);
+                delete col;    
+                break;
+            }
+            case delete_collect_t:
+            {
+                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
+                state=delete_collect(col->user_id,col->collect_art_id);
+                response=packet_response(NULL,state,type);
+                delete col;    
                 break;
             }
             case insert_user_t:
@@ -281,15 +338,64 @@ struct Result* process_request(char* buffer)
                 response=packet_response(NULL,state,type);
                 break;
             }
-            case modify_user_t:
+            case insert_article_t:
             {
-                User* user=new User;
-                user=(User*)json2struct(json,USER,&len_t);
-                state=modify_user(user);//查询然后strcut2json 然后协议
+                //2次查询，为了art_id
+                printf("json=%s\n",json);
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=insert_article(article);
+                Article* result=NULL;
+                result=query_article_id(article->user_id);
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=SUCCESS;
+                str=struct2json(result,ARTICLE,1);
+                if(result!=NULL)
+                    delete result;
+                delete article;
+                printf("state=%d\n",state);
+                response=packet_response(str,state,type);
+                break;
+            }
+            case insert_comment_t:
+            {
+                printf("json=%s\n",json);
+                Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
+                state=insert_comment(comment);
+                delete comment;
+                printf("state=%d\n",state);
                 response=packet_response(NULL,state,type);
                 break;
             }
-
+            case modify_user_t:
+            {
+                User* user=NULL;
+                user=(User*)json2struct(json,USER,&len_t);
+                state=modify_user(user);//查询然后strcut2json 然后协议
+                response=packet_response(NULL,state,type);
+                delete user;
+                break;
+            }
+            case modify_article_t:
+            {
+                Article* article=NULL;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=modify_article(article);//查询然后strcut2json 然后协议
+                response=packet_response(NULL,state,type);
+                delete article;
+                break;
+            }
+            case delete_article_t:
+            {
+                Article* article=NULL;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                cout<<"bbbbbbbbbbbbb";
+                state=delete_article(article->art_id);
+                cout<<"zzzzzzzzzzzz";
+                response=packet_response(NULL,state,type);
+                break;
+            }
             case delete_user_t:
             {
                 User* user=new User;
@@ -297,7 +403,6 @@ struct Result* process_request(char* buffer)
                 state=delete_user(user->user_id);
                 response=packet_response(NULL,state,type);
             }
-
             default:
                 break;
         }
@@ -307,7 +412,6 @@ struct Result* process_request(char* buffer)
     }
     return response;
 }
-
 int send_response(int fd,struct Result *result)
 {
     //发送的时候没有带\0,可能有错

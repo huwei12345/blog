@@ -557,6 +557,16 @@ struct Result* process_request(char* buffer)
                 response=packet_response(NULL,state,type);
                 break;               
             }
+            case delete_article_t:
+            {
+                Article* article=new Article;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                cout<<"bbbbbbbbbbbbb";
+                state=delete_article(article->art_id);
+                cout<<"zzzzzzzzzzzz";
+                response=packet_response(NULL,state,type);
+                break;
+            }
             case delete_user_t:
             {
                 User* user=new User;
@@ -564,7 +574,6 @@ struct Result* process_request(char* buffer)
                 state=delete_user(user->user_id);
                 response=packet_response(NULL,state,type);
             }
-
             default:
                 break;
         }

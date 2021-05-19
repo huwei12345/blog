@@ -34,7 +34,7 @@ void mysql_init()
     string host("localhost");
     string user("root");
     string pwd("123456");
-    string dbName("blog");
+    string dbName("blog2");
     //CMysqlManager mgr;
     //if(mgr.init(host.c_str(), user.c_str(), pwd.c_str(), dbName.c_str()) == false)
     //    return;    
@@ -45,6 +45,7 @@ void mysql_init()
         mysqlpool[i]=static_cast<std::shared_ptr<CMysql>>(new CMysql());
         mysqlpool[i]->init(host,user,pwd,dbName);
         mysqlqueue[i]=0;
+        mysqlpool[i]->execute("SET NAMES UTF8");
     }
 }
 CMysql* get_mysql_handler(int *count)
@@ -356,7 +357,7 @@ Article* query_article(int art_id)//不需要返回数组
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str = new char[200];
-    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id,article from article_t where art_id=%d;",art_id);
+    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id,article,type from article_t where art_id=%d;",art_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -396,12 +397,47 @@ Article* query_article(int art_id)//不需要返回数组
         article->text=new char[length];
         strcpy(article->text,pRow[7].getString().c_str());
         article->text[length-1]='\0';
+        article->type=pRow[8].getInt32();
+
         res->endQuery();
         delete res;
         return article;
     }
     return NULL;
 }
+
+Article* query_article_id(int user_id)
+{
+    //获取user_id对应的最大aricle_id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select max(art_id) from article_t where user_id=%d;",user_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Article* article=new Article;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        article->art_id=pRow[0].getInt32();
+        res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+
 Comment* query_comment(int art_id,int* count)
 {
     //根据文章id获取评论/回答
@@ -492,6 +528,54 @@ Collect* query_collect(int user_id,int* count)
         return collect;
     }
     return NULL;
+}
+
+Status query_user_rel_exist(User_Relation* rel)
+{
+    //查询是否存在关注关系
+    QueryResult* res=NULL;
+    char* str=new char[200];
+    snprintf(str,200,"SELECT 1 FROM users_rel_t WHERE user_id=%d and rel_user_id=%d;",rel->user_id,rel->rel_user_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return FAILURE;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    if(res->getRowCount()==0)
+    {
+        res->endQuery();
+        delete res;
+        return FAILURE;
+    }
+    res->endQuery();
+    delete res;
+    return SUCCESS;
+}
+Status query_user_col_exist(Collect* col)
+{
+    //查询是否存在收藏关系
+    QueryResult* res=NULL;
+    char* str=new char[200];
+    snprintf(str,200,"SELECT 1 FROM collect_t WHERE user_id=%d and collect_art_id=%d;",col->user_id,col->collect_art_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return FAILURE;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    if(res->getRowCount()==0)
+    {
+        res->endQuery();
+        delete res;
+        return FAILURE;
+    }
+    res->endQuery();
+    delete res;
+    return SUCCESS;
+
 }
 
 Status insert_user(User *p)
@@ -659,7 +743,7 @@ Status insert_article(Article *article)
     int len=strlen(article->text);
     char* temp=new char[len+1];
     char* str = new char[200+len];
-    snprintf(str, 200+len, "insert into article_t(user_id,title,upvote_num,create_time,modify_time,group_id,article) values(");
+    snprintf(str, 200+len, "insert into article_t(user_id,title,upvote_num,create_time,modify_time,group_id,article,type) values(");
     //%d,'%s','%s',%d,'%s','%s',%d);",
     //    article->user_id, article->title,article->text,article->upvote_num,article->create_time,article->modify_time,article->group_id    
     if(article->user_id!=-1)
@@ -698,12 +782,18 @@ Status insert_article(Article *article)
     else
         snprintf(temp,100,",0");
     str=strcat(str,temp);
-    if(article->text!=NULL)//内存太多，不如写if else(特殊处理，spinrf(temp+strlen(temp),"'%s'",article->text) else NULL)
-        snprintf(temp,200,",'%s'",article->text);
-    else
-        snprintf(temp,100,",NULL");
-    str=strcat(str,temp);
 
+    if(article->text!=NULL)//内存太多，不如写if else(特殊处理，spinrf(temp+strlen(temp),"'%s'",article->text) else NULL)
+        snprintf(temp,200+len,",'%s'",article->text);
+    else
+        snprintf(temp,200,",NULL");
+    str=strcat(str,temp);
+    
+    if(article->type!=-1)
+        snprintf(temp,100,",%d",article->type);
+    else
+        snprintf(temp,100,",0");
+    str=strcat(str,temp);
     snprintf(temp,100,");");
     strcat(str,temp);
     printf("str = %s\n",str);
@@ -838,30 +928,29 @@ Status modify_user(User *user)
     if(user->user_id==-1)
         return MODIFY_ERROR;
     //int flag=0;
-    char* str=new char[100];
-	snprintf(str,100,"update user_t set");
+    char* str=new char[200];
+	snprintf(str,100,"update users_t set");
     if(user==NULL)
         return MODIFY_ERROR;
     if(user->name!=NULL)
     {
         //把名字传来吧，“,”的逻辑太多了
-        snprintf(str+strlen(str),100,"%s name=%s",str,user->name);
+        snprintf(str+strlen(str),100," name='%s'",user->name);
         //flag=0;
     }
     if(user->sex!=NULL)
-        snprintf(str+strlen(str),100,"%s,sex=%s",str,user->sex);
+        snprintf(str+strlen(str),100,",sex='%s'",user->sex);
     if(user->address!=NULL)
-        snprintf(str+strlen(str),100,"%s,address=%s",str,user->address);
-    if(user->password!=NULL)
-        snprintf(str+strlen(str),100,"%s,password=%s",str,user->password);
+        snprintf(str+strlen(str),100,",address='%s'",user->address);
     snprintf(str+strlen(str),100," where user_id=%d;",user->user_id);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
+    printf("sql:%s\n",str);
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "user modify error" << endl;
 		return MODIFY_ERROR;
 	}
     mysqlqueue[sql_index]=0;
@@ -874,14 +963,14 @@ Status modify_group(Group *group)
 {
     char* str = new char[100];
     
-	snprintf(str, 100, "update user_t set");
+	snprintf(str, 100, "update group_t set");
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "group modify error" << endl;
 		return MODIFY_ERROR;
 	}
     mysqlqueue[sql_index]=0;
@@ -890,16 +979,30 @@ Status modify_group(Group *group)
 }
 Status modify_article(Article *article)
 {
-    char* str = new char[100];
-    
-	snprintf(str, 100, "update user_t set");
+    int len=strlen(article->text);
+    char* str = new char[200+len];
+	snprintf(str, 100, "update article_t set");
+    if(article==NULL)
+        return MODIFY_ERROR;
+    if(article->title!=NULL)
+    {
+        //把名字传来吧，“,”的逻辑太多了
+        snprintf(str+strlen(str),200," title='%s'",article->title);
+        //flag=0;
+    }
+    if(article->type!=-1)
+        snprintf(str+strlen(str),200,",type=%d",article->type);
+    if(article->text!=NULL)
+        snprintf(str+strlen(str),200,",article='%s'",article->text);
+    snprintf(str+strlen(str),200," where art_id=%d and user_id=%d;",article->art_id,article->user_id);
+    printf("sql:%s\n",str);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
     if(m_mysql->execute(str)==false)//插入数据,已经有了
 	{
-		cout << "data modify error" << endl;
+		cout << "article modify error" << endl;
 		return MODIFY_ERROR;
 	}
     mysqlqueue[sql_index]=0;
@@ -1011,22 +1114,26 @@ Status delete_all_group(int user_id)
 
 Status delete_article(int art_id)
 {
-    //删除谋篇文章
-    char* str = new char[100];
-    
-    snprintf(str,100,"delete from article_t where art_id=%d",art_id);
-    int sql_index=0;
-    CMysql* m_mysql=get_mysql_handler(&sql_index);
-    if(m_mysql==NULL)
-        return GET_MYSQL_ERROR;
-    if(m_mysql->execute(str)==false)//插入数据,已经有了
-	{
-		cout << "article data delete error" << endl;
-		return MODIFY_ERROR;
-	}
-    mysqlqueue[sql_index]=0;
-    delete[] str;
-    return SUCCESS;
+    if(art_id!=-1)
+    {
+        //删除谋篇文章
+        char* str = new char[100];
+        snprintf(str,100,"delete from article_t where art_id=%d",art_id);
+        int sql_index=0;
+        CMysql* m_mysql=get_mysql_handler(&sql_index);
+        if(m_mysql==NULL)
+            return GET_MYSQL_ERROR;
+        if(m_mysql->execute(str)==false)//插入数据,已经有了
+        {
+            cout << "article data delete error" << endl;
+            return MODIFY_ERROR;
+        }
+        mysqlqueue[sql_index]=0;
+        delete[] str;
+        return SUCCESS;
+    }
+    else
+        return SUCCESS;
 }
 
 Status delete_all_article(int user_id)

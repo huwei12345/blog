@@ -68,7 +68,8 @@ public:
                 upvote_num(-1),
                 create_time(NULL),
                 modify_time(NULL),
-                group_id(-1)
+                group_id(-1),
+                type(-1)
     {}
     int art_id;//文章id
     int user_id;//用户id
@@ -78,6 +79,7 @@ public:
     char* create_time;//创建时间
     char* modify_time;//最后修改时间
     int group_id;//属于分组
+    int type;//类型
 };
 //评论
 class Comment
@@ -124,8 +126,12 @@ User_Relation* query_user_rel(int user_id,int* count);
 Group* query_group(int user_id,int* count);
 Article* query_article_title(int user_id,int* count);
 Article* query_article(int art_id);
+Article* query_article_id(int user_id);
 Comment* query_comment(int art_id,int* count);
 Collect* query_collect(int user_id,int* count);
+
+Status query_user_rel_exist(User_Relation* rel);
+Status query_user_col_exist(Collect* col);
 
 Status insert_user(User *p);
 Status insert_user_rel(User_Relation *user_relation);
