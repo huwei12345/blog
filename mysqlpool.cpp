@@ -180,7 +180,7 @@ int query_have_user_account(char* account)//不需要返回数组
     QueryResult* res=NULL;
     //根据用户密码，获取个人信息，返回个人信息id等，本人
     char* str=new char[200];
-    snprintf(str,200,"SELECT 1 FROM users_t WHERE account=%s;",account);
+    snprintf(str,200,"SELECT 1 FROM users_t WHERE account='%s';",account);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
@@ -580,6 +580,7 @@ Status query_user_col_exist(Collect* col)
 
 Status insert_user(User *p)
 {
+    printf("insert_user %s\n",p->name);
     char* str = new char[200];
     char* temp=new char[100];
     snprintf(str, 200, "insert into users_t(name,address,sex,create_time,fans_num,article_num,account,password) values(");
@@ -631,7 +632,7 @@ Status insert_user(User *p)
     str=strcat(str,temp);
     snprintf(temp,100,");");
     strcat(str,temp);
-    printf("str = %s\n",str);
+    printf("sql=%s\n",str);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
@@ -817,12 +818,12 @@ Status insert_comment(Comment *comment)
     int len=strlen(comment->text);
     char* temp=new char[len+1];
     char* str = new char[200+len];
-    snprintf(str, 200+len, "insert into comment_t(com_id,art_id,com_user_id,com_text,upvote_num,is_question) values(");
+    snprintf(str, 200+len, "insert into comment_t(art_id,com_user_id,com_text,upvote_num,is_question) values(");
     //%d,%d,%d,'%s',%d,%d);",
     //    comment->comment_id,comment->art_id,comment->com_user_id,comment->text,comment->upvote_num,comment->is_question    
-    if(comment->comment_id!=-1)
+    if(comment->art_id!=-1)
     {
-        snprintf(temp,200,"%d",comment->comment_id);
+        snprintf(temp,200,"%d",comment->art_id);
         str=strcat(str,temp);
     }
     else
@@ -831,11 +832,6 @@ Status insert_comment(Comment *comment)
         delete[] temp;
         return INSERT_ERROR;
     }
-    if(comment->art_id!=-1)
-        snprintf(temp,200,",%d",comment->art_id);
-    else
-        snprintf(temp,200,",0");
-    str=strcat(str,temp);
 
     if(comment->com_user_id!=-1)
         snprintf(temp,100,",%d",comment->com_user_id);
@@ -880,8 +876,7 @@ Status insert_collect(Collect *collect)
 {
     char* str = new char[200];
     char* temp=new char[40];
-    snprintf(str, 200, "insert into collect_t(user_id,collect_art_id,collect_num) values(%d,%d,%d);",
-        collect->user_id,collect->collect_art_id,collect->collect_num);
+    snprintf(str, 200, "insert into collect_t(user_id,collect_art_id,collect_num) values(");
     
     if(collect->user_id!=-1)
         snprintf(temp,200,"%d",collect->user_id);
@@ -891,6 +886,7 @@ Status insert_collect(Collect *collect)
         delete[] temp;
         return INSERT_ERROR;
     }
+    str=strcat(str,temp);
     if(collect->collect_art_id!=-1)
         snprintf(temp,200,",%d",collect->collect_art_id);
     else
@@ -1197,8 +1193,9 @@ Status delete_collect(int user_id,int art_id)
 {
     //删除个人的某个收藏
     char* str = new char[100];
-    snprintf(str,100,"delete from collect_t where user_id=%d and art_id=%d",user_id,art_id);
+    snprintf(str,100,"delete from collect_t where user_id=%d and collect_art_id=%d;",user_id,art_id);
     int sql_index=0;
+    printf("sql:%s\n",str);
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
         return GET_MYSQL_ERROR;
@@ -1230,6 +1227,254 @@ Status delete_collect_all(int user_id)
     mysqlqueue[sql_index]=0;
     delete[] str;
     return SUCCESS;
+}
+
+Status add_art_upvote(int art_id)
+{
+    char* str = new char[200];
+	snprintf(str, 100, "update article_t set");
+    if(art_id==-1)
+        return MODIFY_ERROR;
+    snprintf(str+strlen(str),200," upvote_num=upvote_num+1 where art_id=%d;",art_id);
+    printf("sql:%s\n",str);
+    int sql_index=0;
+    CMysql* m_mysql=get_mysql_handler(&sql_index);
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "upvote article error" << endl;
+		return MODIFY_ERROR;
+	}
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    return SUCCESS;
+}
+
+Article* query_article_bytype(int type,int *count)
+{
+    //返回名字数组
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[200];
+    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id,type from article_t where type=%d order by upvote_num desc limit 5;",type);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            article[i].type=pRow[7].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+Article* query_article_bynow(int *count)
+{
+//返回名字数组
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[300];
+    snprintf(str,300,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id,type from article_t where to_days(now())-to_days(create_time)<=1 order by create_time desc limit 5;");
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+Article* query_article_bymonth(int *count)
+{
+//返回名字数组
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[300];
+    snprintf(str,300,"SELECT art_id,user_id,title,upvote_num,create_time,modify_time,group_id,type from article_t WHERE DATE_SUB(CURDATE(),INTERVAL 1 MONTH) <= DATE(create_time) order by upvote_num desc limit 5;");
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
+Article* query_article_byweek(int *count)
+{
+//返回名字数组
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[300];
+    snprintf(str,300,"SELECT art_id,user_id,title,upvote_num,create_time,modify_time,group_id,type from article_t WHERE create_time BETWEEN CURRENT_DATE() -7 AND SYSDATE() order by upvote_num desc limit 5;");
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
 }
 
 //可以记录一下j2p的，再p2j的，再反过来

@@ -11,7 +11,8 @@ class A
 int main()
 {
     A *a=new A[10];
-    A *b=a;
+    delete [10]a;
+    /*
     char *str=new char[1000];
     strcpy(str,"hello");
     for(int i=0;i<10;i++)
@@ -39,5 +40,7 @@ int main()
     {
         printf("%c ",name[i]);
     }
+    */
+
     return 0;
 }

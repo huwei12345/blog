@@ -14,9 +14,11 @@
 #include<fcntl.h>
 #include<iostream>
 #include<sys/epoll.h>
+#include<netinet/tcp.h>
+#include <sys/ioctl.h> 
 #include"mysqlpool.h"
 #include"addjson.h"
-
+#include<linux/sockios.h>
 #define BUFFER_SIZE 1024
 #define CONTENT_SIZE 1024*1024
 #define PROTO_SIZE 12
@@ -29,7 +31,7 @@ enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_coll
              query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_simple_t,
              modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
              delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
-             test};
+             test,add_art_upvote_t,query_article_bytype_t,query_art_bynow_t,query_art_bymonth_t,query_art_byweek_t};
 //type还要加一些如login
 
 #define BUFFER_SIZE 1024
@@ -112,11 +114,12 @@ Result* packet_response(char *str,int status,int type)
     char* result=new char[PROTO_SIZE];
     Result *res=new Result;
     //将结果打包
+    unsigned int length=0;
     if(status==FAILURE||status==INSERT_ERROR||status==GET_MYSQL_ERROR||status==MODIFY_ERROR)
     {
         //错误，无数据
         res->json=NULL;
-        unsigned int length=PROTO_SIZE;
+        length=PROTO_SIZE;
         memcpy(result,&length,4);
         memcpy(result+4,&status,2);
         memcpy(result+6,&type,2);
@@ -132,7 +135,7 @@ Result* packet_response(char *str,int status,int type)
             res->json=NULL;
         res->protocol=result;
         int CRC=4;//CRC校验，包括json+4个字段,暂无
-        unsigned int length=PROTO_SIZE;
+        length=PROTO_SIZE;
         if(str!=NULL)
             length+=strlen(str);//包总长度
         memcpy(result,&length,4);
@@ -141,6 +144,10 @@ Result* packet_response(char *str,int status,int type)
         memcpy(result+8,&CRC,4);
         //增加64位前缀，用协议层封装
     }
+    if(str!=NULL)
+        printf("Response:             length=%d,status=%d,type=%d,json=%s\n",length,status,type,str);
+    else
+        printf("Response:             length=%d,status=%d,type=%d,json=NULL\n",length,status,type);
     return res;
 }
 
@@ -153,7 +160,7 @@ struct Result* process_request(char* buffer)
     int type=trans2((buffer+6));
     unsigned int CRC=trans4((buffer));
     char* json=buffer+PROTO_SIZE;
-    printf("length=%d,status=%d,type=%d,CRC=%d,json=%s\n",length,status,type,CRC,json);
+    printf("Request:             length=%d,status=%d,type=%d,CRC=%d,json=%s\n",length,status,type,CRC,json);
     //int ret=assert_crc(buffer,CRC);crc检验
     struct Result* response=NULL;
     int state=0;
@@ -167,7 +174,7 @@ struct Result* process_request(char* buffer)
                 printf("json=%s\n",json);
                 User* user=(User*)json2struct(json,USER,&len_t);
                 User* user_new=NULL;
-                printf("account=%s,password=%s",user->account,user->password);
+                //printf("account=%s,password=%s",user->account,user->password);
                 user_new=query_my_user(user->account,user->password);
                 delete user;
                 //printf("state=%d\n",state);
@@ -312,6 +319,8 @@ struct Result* process_request(char* buffer)
             {
                 Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
                 state=insert_collect(col);
+                if(state!=SUCCESS)
+                    state=FAILURE;
                 response=packet_response(NULL,state,type);
                 delete col;    
                 break;
@@ -320,8 +329,73 @@ struct Result* process_request(char* buffer)
             {
                 Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
                 state=delete_collect(col->user_id,col->collect_art_id);
+                if(state!=SUCCESS)
+                    state=FAILURE;
                 response=packet_response(NULL,state,type);
                 delete col;    
+                break;
+            }
+            case add_art_upvote_t:
+            {
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=add_art_upvote(article->art_id);
+                response=packet_response(NULL,state,type);
+                delete article;
+                break;
+            }
+            case query_article_bytype_t:
+            {
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                if(article!=NULL)
+                    article=query_article_bytype(article->type,&len_t);
+                else
+                    article=query_article_bytype(0,&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_bynow_t:
+            {
+                Article* article=NULL;
+                article=query_article_bynow(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_bymonth_t:
+            {
+                Article* article=NULL;
+                article=query_article_bymonth(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_byweek_t:
+            {
+                Article* article=NULL;
+                article=query_article_byweek(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
                 break;
             }
             case insert_user_t:
@@ -390,9 +464,7 @@ struct Result* process_request(char* buffer)
             {
                 Article* article=NULL;
                 article=(Article*)json2struct(json,ARTICLE,&len_t);
-                cout<<"bbbbbbbbbbbbb";
                 state=delete_article(article->art_id);
-                cout<<"zzzzzzzzzzzz";
                 response=packet_response(NULL,state,type);
                 break;
             }
@@ -402,6 +474,31 @@ struct Result* process_request(char* buffer)
                 user=(User*)json2struct(json,USER,&len_t);
                 state=delete_user(user->user_id);
                 response=packet_response(NULL,state,type);
+            }
+            case insert_group_t:
+            {
+                //2次查询，为了group_id
+                printf("json=%s\n",json);
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=insert_article(article);
+                Article* result=NULL;
+                result=query_article_id(article->user_id);
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=SUCCESS;
+                str=struct2json(result,ARTICLE,1);
+                if(result!=NULL)
+                    delete result;
+                delete article;
+                printf("state=%d\n",state);
+                response=packet_response(str,state,type);
+                break;
+            }
+            case delete_group_t:
+            {
+                //万一group中有文章怎么办
+                break;
             }
             default:
                 break;
@@ -463,56 +560,15 @@ int send_response(int fd,struct Result *result)
             }
         }
     }
+    /* 查看输出缓存区数目
+    int value;
+    ioctl(fd, SIOCOUTQ, &value);
+    printf("rest %d wait for send\n",value);
+    */
     len=0;
     length=PROTO_SIZE;
     return length_t+PROTO_SIZE;
 }
-
-
-void* work_thread_loop(void* arg)
-{
-    int epollfd=0;
-    epollfd=epoll_create(10);
-    epoll_event events[EPOLLNUM];
-    char* request=NULL;
-    struct Result* response=NULL;
-    while(1)
-    {
-        int n=epoll_wait(epollfd,events,EPOLLNUM,-1);
-        {
-            //
-            for(int i=0;i<n;i++)
-            {
-                if(events[i].events|EPOLLIN)//请求到达
-                {
-                    request=get_request(events[i].data.fd);
-                    response=process_request(request);
-                    send_response(events[i].data.fd,response);
-                }
-                if(events[i].events|EPOLLOUT)//有数据发送
-                {
-                    std::cout<<"some thing send out"<<std::endl;
-                }
-                if(events[i].events|EPOLLERR)
-                {
-                    close(events[i].data.fd);
-                    epoll_ctl(epollfd,EPOLL_CTL_DEL,events[i].data.fd,NULL);
-                }
-                if(events[i].events==EPOLLRDHUP)//对端关闭连接
-                {
-                    close(events[i].data.fd);
-                    epoll_ctl(epollfd,EPOLL_CTL_DEL,events[i].data.fd,NULL);
-                }
-            }
-        }
-        //do_other_thing();
-    }
-}
-
-struct arg
-{
-    ;
-};
 
 
 /*非阻塞*/
@@ -528,10 +584,6 @@ void addfd(int epollfd,int fd,bool enable_et)
     epoll_event event;
     event.data.fd=fd;
     event.events=EPOLLIN;
-    if(enable_et)
-    {
-        event.events|=EPOLLET;
-    }
     epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
     setnoblocking(fd);
 }
@@ -546,6 +598,13 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
             struct sockaddr_in client_address;
             socklen_t client_addresslength=sizeof(client_address);
             int connfd=accept(listenfd,(struct sockaddr*)&client_address,&client_addresslength);
+            struct  sockaddr_in sa;
+            socklen_t len = sizeof(sa);
+            if(!getpeername(connfd, (struct sockaddr *)&sa, &len))
+            {
+                printf( "对方IP：%s \n", inet_ntoa(sa.sin_addr));
+                printf( "对方PORT：%d \n", ntohs(sa.sin_port));
+            }
             addfd(epollfd,connfd,true);
         }
         else if(events[i].events&EPOLLIN)
@@ -554,7 +613,7 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
             while(len<length)
             {
                 int ret=recv(sockfd,buf+len,length-len,0);
-                printf("ret=%d\n",ret);
+                //printf("ret=%d\n",ret);
 				if(ret<0)
                 {
                     //表示已全读完
@@ -571,13 +630,14 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
                 {
                     printf("connect down\n");
                     close(sockfd);
+                    break;
                 }
                 else
                 {
                     len+=ret;
                     if(len>=4)
                         length=trans4(buf);
-                    printf("length=%d",length);
+                    //printf("length=%d",length);
                     if(len>=length)
                     {
                         Result *x=process_request(buf);
@@ -609,6 +669,14 @@ int main(int argc,char* argv[]){
     inet_pton(AF_INET,ip,&address.sin_addr);
     address.sin_port=htons(port);
     int listenfd=socket(PF_INET,SOCK_STREAM,0);
+    /* set tcpnodelay
+    const char chOpt=1;
+    int nErr=setsockopt(listenfd,IPPROTO_TCP,TCP_NODELAY,&chOpt,sizeof(char));
+    if(nErr==-1)
+    {
+        printf("tcp nodelay set error\n");
+    }
+    */
     assert(listenfd>=0);
     ret=bind(listenfd,(struct sockaddr*)&address,sizeof(address));
     assert(ret!=-1);

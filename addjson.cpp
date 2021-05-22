@@ -52,7 +52,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}    //printf("%s\n",str);
             }
             if(json)
                 cJSON_Delete(json);
@@ -81,7 +81,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}    //printf("%s\n",str);
             }
             if(json_obj)
                 cJSON_Delete(json_obj);
@@ -112,7 +112,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}    //printf("%s\n",str);
             }
             if(json_obj)
                 cJSON_Delete(json_obj);
@@ -153,7 +153,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}//    printf("%s\n",str);
             }
             if(json_obj)
                 cJSON_Delete(json_obj);
@@ -189,7 +189,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}    //printf("%s\n",str);
             }
             if(json_obj)
                 cJSON_Delete(json_obj);
@@ -223,7 +223,7 @@ char* struct2json(void* obj,type type,int length)
             str=cJSON_Print(json);
             {
                 if(str)
-                    printf("%s\n",str);
+                {}    //printf("%s\n",str);
             }
             if(json_obj)
                 cJSON_Delete(json_obj);

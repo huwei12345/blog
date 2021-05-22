@@ -102,10 +102,9 @@ class threadpool
             instance=new threadpool(listenfd,thread_number);
         return instance;
     }
-    //启动进程池
-    void run();
-    void run_loop(int idx);
-    void init();
+    void run();//主线程
+    void run_loop(int idx);//子线程循环
+    void init();//初始化创建thread_num个线程
     private:
     void setup_sig_pipe();
     ~threadpool()
@@ -114,9 +113,7 @@ class threadpool
     }
     private:
     static const int MAX_THREAD_NUMBER=16;
-    //每个子进程最多能处理的客户数量
     static const int USER_PER_PROCESS=65536;
-    //epoll能最多处理的事件数
     static const int MAX_EVENT_NUMBER1=10000;
     thread* threads;//线程
     int thread_num;//线程数

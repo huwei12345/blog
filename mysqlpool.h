@@ -132,6 +132,12 @@ Collect* query_collect(int user_id,int* count);
 
 Status query_user_rel_exist(User_Relation* rel);
 Status query_user_col_exist(Collect* col);
+Status add_art_upvote(int art_id);
+
+Article* query_article_bytype(int type,int *count);
+Article* query_article_bynow(int *count);
+Article* query_article_bymonth(int *count);
+Article* query_article_byweek(int *count);
 
 Status insert_user(User *p);
 Status insert_user_rel(User_Relation *user_relation);
