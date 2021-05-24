@@ -129,6 +129,7 @@ Article* query_article(int art_id);
 Article* query_article_id(int user_id);
 Comment* query_comment(int art_id,int* count);
 Collect* query_collect(int user_id,int* count);
+Group* query_group_id(int user_id);
 
 Status query_user_rel_exist(User_Relation* rel);
 Status query_user_col_exist(Collect* col);

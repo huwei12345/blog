@@ -19,7 +19,6 @@
 #include"mysqlpool.h"
 #include"addjson.h"
 #include<linux/sockios.h>
-#define BUFFER_SIZE 1024
 #define CONTENT_SIZE 1024*1024
 #define PROTO_SIZE 12
 #define EPOLLNUM 1024
@@ -34,13 +33,8 @@ enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_coll
              test,add_art_upvote_t,query_article_bytype_t,query_art_bynow_t,query_art_bymonth_t,query_art_byweek_t};
 //type还要加一些如login
 
-#define BUFFER_SIZE 1024
-#define CONTENT_SIZE 1024*1024
-#define EPOLLNUM 1024
-
-
 #define MAX_EVENT_NUMBER 1024
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 1024*1024
 char buf[BUFFER_SIZE];
 int len=0;//当前读到buf长度
 int length=PROTO_SIZE;//总请求长度
@@ -171,7 +165,7 @@ struct Result* process_request(char* buffer)
         {
             case login_t:
             {
-                printf("json=%s\n",json);
+                //printf("json=%s\n",json);
                 User* user=(User*)json2struct(json,USER,&len_t);
                 User* user_new=NULL;
                 //printf("account=%s,password=%s",user->account,user->password);
@@ -180,6 +174,8 @@ struct Result* process_request(char* buffer)
                 //printf("state=%d\n",state);
                 if(user_new!=NULL)
                     state=SUCCESS;
+                else
+                    state=FAILURE;
                 str=struct2json(user_new,USER,1);
                 delete[] user_new;
                 response=packet_response(str,state,type);
@@ -400,7 +396,7 @@ struct Result* process_request(char* buffer)
             }
             case insert_user_t:
             {
-                printf("json=%s\n",json);
+                //printf("json=%s\n",json);
                 User* user=(User*)json2struct(json,USER,&len_t);
                 state=query_have_user_account(user->account);
                 if(state==0)
@@ -415,7 +411,7 @@ struct Result* process_request(char* buffer)
             case insert_article_t:
             {
                 //2次查询，为了art_id
-                printf("json=%s\n",json);
+                //printf("json=%s\n",json);
                 Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
                 state=insert_article(article);
                 Article* result=NULL;
@@ -434,7 +430,7 @@ struct Result* process_request(char* buffer)
             }
             case insert_comment_t:
             {
-                printf("json=%s\n",json);
+                //printf("json=%s\n",json);
                 Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
                 state=insert_comment(comment);
                 delete comment;
@@ -478,26 +474,39 @@ struct Result* process_request(char* buffer)
             case insert_group_t:
             {
                 //2次查询，为了group_id
-                printf("json=%s\n",json);
-                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
-                state=insert_article(article);
-                Article* result=NULL;
-                result=query_article_id(article->user_id);
+                Group* group=(Group*)json2struct(json,GROUP,&len_t);
+                state=insert_group(group);
+                if(state!=SUCCESS)
+                {
+                    delete group;
+                    printf("state=%d\n",state);
+                    response=packet_response(NULL,FAILURE,type);
+                    break;
+                }
+                Group* result=NULL;
+                result=query_group_id(group->user_id);
                 if(result!=NULL)
                     state=SUCCESS;
                 else
                     state=SUCCESS;
-                str=struct2json(result,ARTICLE,1);
+                str=struct2json(result,GROUP,1);
                 if(result!=NULL)
                     delete result;
-                delete article;
+                delete group;
                 printf("state=%d\n",state);
                 response=packet_response(str,state,type);
                 break;
             }
             case delete_group_t:
             {
-                //万一group中有文章怎么办
+                //1、需要将其下的文章和分组转移 2、递归删除其下文章、分组 3、返回错误
+                Group* group=(Group*)json2struct(json,GROUP,&len_t);
+                state=delete_group(group->user_id,group->group_id);
+                if(state!=SUCCESS)
+                    state=FAILURE;
+                delete group;
+                printf("state=%d\n",state);
+                response=packet_response(NULL,state,type);
                 break;
             }
             default:

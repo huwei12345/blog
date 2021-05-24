@@ -45,7 +45,13 @@ bool CMysql::init(const std::string& host, const std::string& user, const std::s
     {
         //LOGI << "m_Mysql address " << (long)m_Mysql;
         //LOGI << "CMysql::Initialize, set names utf8";
-        mysql_query(m_Mysql, "set names gbk");
+        //mysql_query(m_Mysql, "set names utf8mb4");
+        /*
+        if (!mysql_set_character_set(m_Mysql, "utf8mb4"))
+        {
+            printf("New client character set: %s\n",mysql_character_set_name(m_Mysql));
+        }
+        */
         //mysql_query(m_Mysql, "set names latin1");
         m_bInit = true;
         return true;
@@ -146,6 +152,7 @@ bool CMysql::execute(const char* sql)
         if (iTempRet)
         {
             unsigned int uErrno = mysql_errno(m_Mysql);
+            printf("mysql errno=%u",uErrno);
             //LOGI << "CMysql::Query, mysql is abnormal, errno : " << uErrno;
             if (CR_AUTH_PLUGIN_ERROR == uErrno)
             {

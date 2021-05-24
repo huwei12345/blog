@@ -45,7 +45,7 @@ void mysql_init()
         mysqlpool[i]=static_cast<std::shared_ptr<CMysql>>(new CMysql());
         mysqlpool[i]->init(host,user,pwd,dbName);
         mysqlqueue[i]=0;
-        mysqlpool[i]->execute("SET NAMES UTF8");
+        mysqlpool[i]->execute("set names utf8mb4;");
     }
 }
 CMysql* get_mysql_handler(int *count)
@@ -437,6 +437,38 @@ Article* query_article_id(int user_id)
     }
     return NULL;
 }
+Group* query_group_id(int user_id)
+{ 
+    //获取user_id对应的最大aricle_id
+    QueryResult* res=NULL;
+    //根据用户密码，获取个人信息，返回个人信息id等，本人
+    char* str = new char[200];
+    snprintf(str,200,"select max(group_id) from group_t where user_id=%d;",user_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        Group* group=new Group;
+        //不只取第一个，应该也只有一个，在插入时保证账号唯一
+		Field* pRow = res->fetch();
+		if(pRow == NULL)
+			return NULL;
+        group->group_id=pRow[0].getInt32();
+        res->endQuery();
+        delete res;
+        return group;
+    }
+    return NULL;
+}
+
 
 Comment* query_comment(int art_id,int* count)
 {
@@ -691,25 +723,26 @@ Status insert_user_rel(User_Relation *user_relation)
 
 Status insert_group(Group *group)
 {
-    char* str = new char[100];
-    char* temp=new char[40];
+    char* str = new char[200];
+    char* temp=new char[200];
     if(group->group_name==NULL)
         return INSERT_ERROR;
-    snprintf(str, 200, "insert into group_t(user_id,group_id,group_name,father_group) values(");
-    //%d,%d,'%s',%d);",group->user_id, group->group_id,group->group_name,group->father_group_id
+
+    snprintf(str, 300, "insert into group_t(user_id,group_id,group_name,father_group) values(");
+    printf("sql:%s\n",str);
+    //insert into group_t(user_id,group_id,group_name,father_group) values(1,(select max(group_id) from group_t as b where b.user_id=1)+1,'new group',0);
     if(group->user_id!=-1)
+    {
         snprintf(temp,100,"%d",group->user_id);
+        str=strcat(str,temp);
+    }
     else
     {
         delete[] str;
         delete[] temp;
         return INSERT_ERROR;
     }
-    str=strcat(str,temp);
-    if(group->group_id!=-1)
-        snprintf(temp,100,",%d",group->group_id);
-    else
-        snprintf(temp,100,",0");
+    snprintf(temp,200,",(select ifnull(max(b.group_id),0) from group_t as b where b.user_id=%d)+1",group->user_id);
     str=strcat(str,temp);
     if(group->group_name!=NULL)
         snprintf(temp,100,",'%s'",group->group_name);
@@ -725,6 +758,7 @@ Status insert_group(Group *group)
     strcat(str,temp);
     printf("str = %s\n",str);
     int sql_index=0;
+
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
     {
@@ -742,13 +776,16 @@ Status insert_group(Group *group)
 Status insert_article(Article *article)
 {
     int len=strlen(article->text);
-    char* temp=new char[len+1];
+    printf("article len=%d\n",len);
+    char* temp=new char[len+100];
     char* str = new char[200+len];
-    snprintf(str, 200+len, "insert into article_t(user_id,title,upvote_num,create_time,modify_time,group_id,article,type) values(");
+    memset(temp,'\0',len+100);
+    memset(str,'\0',len+200);
+    snprintf(str, 200, "insert into article_t(user_id,title,upvote_num,create_time,modify_time,group_id,type,article) values(");
     //%d,'%s','%s',%d,'%s','%s',%d);",
     //    article->user_id, article->title,article->text,article->upvote_num,article->create_time,article->modify_time,article->group_id    
     if(article->user_id!=-1)
-        snprintf(temp,200,"%d",article->user_id);
+        snprintf(temp,100,"%d",article->user_id);
     else
     {
         delete[] str;
@@ -757,9 +794,9 @@ Status insert_article(Article *article)
     }
     str=strcat(str,temp);
     if(article->title!=NULL)
-        snprintf(temp,200,",'%s'",article->title);
+        snprintf(temp,100,",'%s'",article->title);
     else
-        snprintf(temp,200,",NULL");
+        snprintf(temp,100,",NULL");
     str=strcat(str,temp);
 
     if(article->upvote_num!=-1)
@@ -783,6 +820,11 @@ Status insert_article(Article *article)
     else
         snprintf(temp,100,",0");
     str=strcat(str,temp);
+    if(article->type!=-1)
+        snprintf(temp,200,",%d",article->type);
+    else
+        snprintf(temp,200,",0");
+    str=strcat(str,temp);
 
     if(article->text!=NULL)//内存太多，不如写if else(特殊处理，spinrf(temp+strlen(temp),"'%s'",article->text) else NULL)
         snprintf(temp,200+len,",'%s'",article->text);
@@ -790,11 +832,6 @@ Status insert_article(Article *article)
         snprintf(temp,200,",NULL");
     str=strcat(str,temp);
     
-    if(article->type!=-1)
-        snprintf(temp,100,",%d",article->type);
-    else
-        snprintf(temp,100,",0");
-    str=strcat(str,temp);
     snprintf(temp,100,");");
     strcat(str,temp);
     printf("str = %s\n",str);
@@ -811,6 +848,7 @@ Status insert_article(Article *article)
 	}
     mysqlqueue[sql_index]=0;
     delete[] str;
+    delete[] temp;
     return SUCCESS;
 }
 Status insert_comment(Comment *comment)
@@ -989,8 +1027,8 @@ Status modify_article(Article *article)
     if(article->type!=-1)
         snprintf(str+strlen(str),200,",type=%d",article->type);
     if(article->text!=NULL)
-        snprintf(str+strlen(str),200,",article='%s'",article->text);
-    snprintf(str+strlen(str),200," where art_id=%d and user_id=%d;",article->art_id,article->user_id);
+        snprintf(str+strlen(str),200+len,",article='%s'",article->text);
+    snprintf(str+strlen(str),200+len," where art_id=%d and user_id=%d;",article->art_id,article->user_id);
     printf("sql:%s\n",str);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
@@ -1250,7 +1288,7 @@ Status add_art_upvote(int art_id)
     delete[] str;
     return SUCCESS;
 }
-
+ 
 Article* query_article_bytype(int type,int *count)
 {
     //返回名字数组
