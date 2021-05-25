@@ -405,7 +405,122 @@ Article* query_article(int art_id)//不需要返回数组
     }
     return NULL;
 }
+User* query_user_name(char* name,int* count)
+{
+    QueryResult* res=NULL;
+    char* str = new char[200];
+    snprintf(str,200,"select user_id,name,address,sex,create_time,fans_num,article_num from users_t where name like '%%%s%%';",name);
+    int sql_index=0;
+    printf("sql:%s\n",str);
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        User* user=new User[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            user[i].user_id=pRow[0].getInt32();
+            int length=0;
+            length=pRow[1].getString().length()+1;
+            user[i].name = new char[length];
+            strcpy(user[i].name,pRow[1].getString().c_str());
+            user[i].name[length-1]='\0';
 
+            length=pRow[2].getString().length()+1;
+            user[i].address=new char[length];
+            strcpy(user[i].address,pRow[2].getString().c_str());
+            user[i].address[length-1]='\0';
+
+            length=pRow[3].getString().length()+1;
+            user[i].sex=new char[length];
+            strcpy(user[i].sex,pRow[3].getString().c_str());
+            user[i].sex[length-1]='\0';
+
+            length=pRow[4].getString().length()+1;
+            user[i].create_time=new char[length];
+            strcpy(user[i].create_time,pRow[4].getString().c_str());
+            user[i].create_time[length-1]='\0';
+
+            user[i].fans_num=pRow[5].getInt32();
+            user[i].article_num = pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return user;
+    }
+    return NULL;
+}
+Article* query_article_name(char* name,int* count)
+{
+    //根据user_id获取个人的文章名，除了article不查其他都查。用于构建目录，在点击时在读取文章
+    QueryResult* res=NULL;
+    char* str = new char[200];
+    snprintf(str,200,"select art_id,user_id,title,upvote_num,create_time,modify_time,group_id from article_t where title like '%%%s%%';",name);
+    printf("sql:%s\n",str);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return NULL;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    unsigned long int row_count=res->getRowCount();
+    if(res==NULL||row_count==0)//不太对，应该检查是否mysql内容返回为空
+        return NULL;
+    else
+    {
+        *count=row_count;
+        unsigned long int i=0;
+        Article* article=new Article[res->getRowCount()];
+        while (i<row_count)
+	    {
+        	Field* pRow = res->fetch();
+            if(pRow == NULL)
+                return NULL;
+            article[i].art_id=pRow[0].getInt32();
+            article[i].user_id=pRow[1].getInt32();
+            
+            int length=pRow[2].getString().length()+1;
+            article[i].title=new char[length];
+            strcpy(article[i].title,pRow[2].getString().c_str());
+            article[i].title[length-1]='\0';
+            article[i].upvote_num=pRow[3].getInt32();
+            
+            length=pRow[4].getString().length()+1;
+            article[i].create_time=new char[length];
+            strcpy(article[i].create_time,pRow[4].getString().c_str());
+            article[i].create_time[length-1]='\0';
+            length=pRow[5].getString().length()+1;
+            article[i].modify_time=new char[length];
+            strcpy(article[i].modify_time,pRow[5].getString().c_str());
+            article[i].modify_time[length-1]='\0';
+
+            article[i].group_id=pRow[6].getInt32();
+            if(!res->nextRow())
+                break;
+            i++;
+	    }
+	    res->endQuery();
+        delete res;
+        return article;
+    }
+    return NULL;
+}
 Article* query_article_id(int user_id)
 {
     //获取user_id对应的最大aricle_id
@@ -995,9 +1110,13 @@ Status modify_user(User *user)
 //group可能修改父节点，名字
 Status modify_group(Group *group)
 {
-    char* str = new char[100];
-    
+    char* str = new char[200];
 	snprintf(str, 100, "update group_t set");
+    if(group==NULL)
+        return MODIFY_ERROR;
+    snprintf(str+strlen(str),200," father_group=%d ",group->father_group_id);
+    snprintf(str+strlen(str),200," where group_id=%d and user_id=%d;",group->group_id,group->user_id);
+    printf("sql:%s\n",str);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
@@ -1010,6 +1129,7 @@ Status modify_group(Group *group)
     mysqlqueue[sql_index]=0;
     delete[] str;
     return SUCCESS;
+
 }
 Status modify_article(Article *article)
 {
@@ -1044,6 +1164,28 @@ Status modify_article(Article *article)
     return SUCCESS;
 }
 
+Status modify_article_group(int art_id,int group_id)
+{
+    char* str = new char[200];
+	snprintf(str, 100, "update article_t set");
+    if(art_id==-1)
+        return MODIFY_ERROR;
+    snprintf(str+strlen(str),200," group_id=%d ",group_id);
+    snprintf(str+strlen(str),200," where art_id=%d;",art_id);
+    printf("sql:%s\n",str);
+    int sql_index=0;
+    CMysql* m_mysql=get_mysql_handler(&sql_index);
+    if(m_mysql==NULL)
+        return GET_MYSQL_ERROR;
+    if(m_mysql->execute(str)==false)//插入数据,已经有了
+	{
+		cout << "article modify error" << endl;
+		return MODIFY_ERROR;
+	}
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    return SUCCESS;
+}
 //comment不需要修改，只需要删除和增加
 
 //收藏不需要修改，只支持增删,也许以后有树形结构，再添加修改功能
@@ -1107,6 +1249,52 @@ Status delete_all_user_rel(int user_id)
     mysqlqueue[sql_index]=0;
     delete[] str;
     return SUCCESS;
+}
+Status query_have_article_in(int group_id)
+{
+    QueryResult* res=NULL;
+    char* str=new char[200];
+    snprintf(str,200,"SELECT 1 FROM article_t WHERE group_id=%d;",group_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return FAILURE;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    printf("group_id has %lu article\n",res->getRowCount());
+    if(res->getRowCount()==0)
+    {
+        res->endQuery();
+        delete res;
+        return SUCCESS;
+    }
+    res->endQuery();
+    delete res;
+    return FAILURE;
+}
+Status query_have_group_in(int user_id,int group_id)
+{
+    QueryResult* res=NULL;
+    char* str=new char[200];
+    snprintf(str,200,"SELECT 1 FROM group_t WHERE father_group=%d and user_id=%d;",group_id,user_id);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return FAILURE;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    printf("group_id has %lu son group\n",res->getRowCount());
+    if(res->getRowCount()==0)
+    {
+        res->endQuery();
+        delete res;
+        return SUCCESS;
+    }
+    res->endQuery();
+    delete res;
+    return FAILURE;
 }
 Status delete_group(int user_id,int group_id)
 {
@@ -1189,11 +1377,11 @@ Status delete_all_article(int user_id)
     return SUCCESS;
 }
 
-Status delete_comment(int art_id,int comment_id)
+Status delete_comment(int comment_id)
 {
     //删除某条评论
     char* str = new char[100];
-    snprintf(str,100,"delete from comment_t where art_id=%d and com_id=%d",art_id,comment_id);
+    snprintf(str,100,"delete from comment_t where com_id=%d",comment_id);
     int sql_index=0;
     CMysql* m_mysql=get_mysql_handler(&sql_index);
     if(m_mysql==NULL)
@@ -1402,6 +1590,28 @@ Article* query_article_bynow(int *count)
     }
     return NULL;
 }
+Status query_have_group(int group,int user)
+{
+    QueryResult* res=NULL;
+    char* str=new char[200];
+    snprintf(str,200,"SELECT 1 FROM group_t WHERE group_id=%d and user_id=%d;",group,user);
+    int sql_index=0;
+    CMysql* mysql=get_mysql_handler(&sql_index);
+    if(mysql==NULL)
+        return FAILURE;
+    res=mysql->query(str);
+    mysqlqueue[sql_index]=0;
+    delete[] str;
+    if(res->getRowCount()==0)
+    {
+        res->endQuery();
+        delete res;
+        return FAILURE;
+    }
+    res->endQuery();
+    delete res;
+    return SUCCESS;
+}
 Article* query_article_bymonth(int *count)
 {
 //返回名字数组
@@ -1514,21 +1724,5 @@ Article* query_article_byweek(int *count)
     }
     return NULL;
 }
-
-//可以记录一下j2p的，再p2j的，再反过来
-
-//要求能够json中的数组转数组，并提取长度
-
-//结构体数组转json数组，不必提取长度
-
-//另外insert里的sprinf是否使用str+strlen(str)作为第一个参数更好，否则插入文章时浪费太多内存
-
-//明天解决这两个问题，后端更加能够使用，并连接qt，在qt中接收实际字符串，解析协议，并接入cJSON
-
-// 2  提取结构体，并用于登录，然后再做注册功能，查询关注、收藏，个人信息。论文第二章简单写一些，ppt简单制作
-
-// 3  中期检查后能够查询文章名，再文章内容，做出qt界面的点击文章名跳转，是否要做数据模型以存储id，而显示名字？
-
-// 3  后端目前只支持一个连接，后续需要创建线程池，数据库连接池，并设计thread类，能过支持多链接。
-
-// 3  再之后可以将C重构为C++，再有时间可以考虑event类型、后端日志，前端界面其他功能。
+//insert里的sprinf是否使用str+strlen(str)作为第一个参数更好，例如modify中,否则插入文章时浪费太多内存
+//再之后可以将C重构为C++，再有时间可以考虑event类型、后端日志，前端界面其他功能。

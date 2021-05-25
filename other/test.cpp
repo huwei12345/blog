@@ -73,7 +73,9 @@ class Collect
 };
 int main()
 {
-    printf("\u0017⚌\u000b");
+    //printf("\u0017⚌\u000b");
+    printf("hello%%");
+    
     /*
     char *str=new char[1000];
     strcpy(str,"hello");

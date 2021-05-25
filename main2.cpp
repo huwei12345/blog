@@ -30,7 +30,8 @@ enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_coll
              query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_simple_t,
              modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
              delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
-             test,add_art_upvote_t,query_article_bytype_t,query_art_bynow_t,query_art_bymonth_t,query_art_byweek_t};
+             test,add_art_upvote_t,query_article_bytype_t,query_art_bynow_t,query_art_bymonth_t,query_art_byweek_t,query_user_id_t,
+             query_user_name_t,query_article_id_t,query_article_name_t,modify_article_group_t};
 //type还要加一些如login
 
 #define MAX_EVENT_NUMBER 1024
@@ -452,6 +453,8 @@ struct Result* process_request(char* buffer)
                 Article* article=NULL;
                 article=(Article*)json2struct(json,ARTICLE,&len_t);
                 state=modify_article(article);//查询然后strcut2json 然后协议
+                if(state!=SUCCESS)
+                    state=FAILURE;
                 response=packet_response(NULL,state,type);
                 delete article;
                 break;
@@ -501,16 +504,134 @@ struct Result* process_request(char* buffer)
             {
                 //1、需要将其下的文章和分组转移 2、递归删除其下文章、分组 3、返回错误
                 Group* group=(Group*)json2struct(json,GROUP,&len_t);
-                state=delete_group(group->user_id,group->group_id);
-                if(state!=SUCCESS)
+                state=query_have_article_in(group->group_id);
+                printf("state1=%d\n",state);
+                int state2=query_have_group_in(group->user_id,group->group_id);
+                printf("state2=%d\n",state2);
+                if(state==SUCCESS&&state2==SUCCESS)
+                {
+                    state=delete_group(group->user_id,group->group_id);
+                    if(state!=SUCCESS)
+                        state=FAILURE;
+                    printf("state3=%d\n",state);
+                }
+                else
                     state=FAILURE;
                 delete group;
-                printf("state=%d\n",state);
+                response=packet_response(NULL,state,type);
+                break;
+            }
+            case modify_group_t:
+            {
+                //修改分组的信息
+                Group* group=NULL;
+                group=(Group*)json2struct(json,GROUP,&len_t);
+                state=query_have_group(group->group_id,group->user_id);
+                if(state==SUCCESS)
+                {
+                    if(group!=NULL)
+                        state=modify_group(group);
+                    if(state!=SUCCESS)
+                        state=FAILURE;
+                }
+                response=packet_response(NULL,state,type);
+                delete group;
+                break;
+            }
+            case modify_article_group_t:
+            {
+                //修改文章的分组
+                Article* article=NULL;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=query_have_group(article->group_id,article->user_id);
+                if(state==SUCCESS)
+                {
+                    state=modify_article_group(article->art_id,article->group_id);//查询然后strcut2json 然后协议
+                    if(state!=SUCCESS)
+                        state=FAILURE;
+                }
+                else
+                    state=FAILURE;
+                response=packet_response(NULL,state,type);
+                delete article;
+                break;
+            }
+            case query_user_id_t:
+            {
+                //查询用户id 返回用户信息
+                User* user=(User*)json2struct(json,USER,&len_t);
+                int id=user->user_id;
+                User* result=query_user(id);//查询然后strcut2json 然后协议
+                delete user;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,USER,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_user_name_t:
+            {
+                //查询用户name,返回用户信息
+                User* user=(User*)json2struct(json,USER,&len_t);
+                User* result=query_user_name(user->name,&len_t);//查询然后strcut2json 然后协议
+                delete user;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,USER,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_article_id_t:
+            {
+                //查询文章id 返回文章信息，此处可以重写一个，就不用返回文章，节省网络资源，现在也行
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                Article* result=query_article(article->art_id);
+                delete article;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,ARTICLE,1);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case query_article_name_t:
+            {
+                //查询文章名
+                //查询文章id 返回文章信息，此处可以重写一个，就不用返回文章，节省网络资源，现在也行
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                Article* result=query_article_name(article->title,&len_t);
+                delete article;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,ARTICLE,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
+            case delete_comment_t:
+            {
+                Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
+                state=delete_comment(comment->comment_id);
+                if(state!=SUCCESS)
+                    state=FAILURE;
                 response=packet_response(NULL,state,type);
                 break;
             }
             default:
+            {
+                response=packet_response(NULL,FAILURE,0);
                 break;
+            }
         }
     else
     {

@@ -121,16 +121,21 @@ CMysql* get_mysql_handler();
 
 User* query_my_user(char* account,char* password);
 User* query_user(int user_id);
+User* query_user_name(char* name,int* count);
 int query_have_user_account(char* account);//不需要返回数组
 User_Relation* query_user_rel(int user_id,int* count);
 Group* query_group(int user_id,int* count);
 Article* query_article_title(int user_id,int* count);
 Article* query_article(int art_id);
+Article* query_article_name(char* name,int* count);
 Article* query_article_id(int user_id);
 Comment* query_comment(int art_id,int* count);
 Collect* query_collect(int user_id,int* count);
 Group* query_group_id(int user_id);
 
+Status query_have_article_in(int group_id);
+Status query_have_group_in(int user_id,int group_id);
+Status query_have_group(int group,int user);
 Status query_user_rel_exist(User_Relation* rel);
 Status query_user_col_exist(Collect* col);
 Status add_art_upvote(int art_id);
@@ -153,6 +158,8 @@ Status modify_group(Group *group);
 Status modify_article(Article *article);
 Status modify_comment(Comment *comment);
 Status modify_collect(Collect *collect);
+Status modify_article_group(int art_id,int group_id);
+
 
 Status delete_user(int user_id);
 Status delete_user_rel(int user_id,int user_rel_id);
@@ -161,7 +168,7 @@ Status delete_group(int user_id,int group_id);
 Status delete_all_group(int user_id);
 Status delete_article(int art_id);
 Status delete_all_article(int user_id);
-Status delete_comment(int art_id,int comment_id);
+Status delete_comment(int comment_id);
 Status delete_comment_all(int art_id);
 Status delete_collect(int user_id,int art_id);
 Status delete_collect_all(int user_id);
