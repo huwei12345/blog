@@ -1,0 +1,264 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - main3.info - /home/huwei/workspace/blog/mysqlpool.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">home/huwei/workspace/blog</a> - mysqlpool.h<span style="font-size: 80%;"> (source / <a href="mysqlpool.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">main3.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-05-27 15:25:31</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #ifndef MYSQLPOOL_H</a>
+<span class="lineNum">       2 </span>            : #define MYSQLPOOL_H
+<span class="lineNum">       3 </span>            : #include&lt;iostream&gt;
+<span class="lineNum">       4 </span>            : #include&lt;stdio.h&gt;
+<span class="lineNum">       5 </span>            : using namespace std;
+<span class="lineNum">       6 </span>            : class CMysql;
+<span class="lineNum">       7 </span>            : //状态，目前只用到REQUEST,SUCCESS,FAILURE，其他以后可以用
+<span class="lineNum">       8 </span>            : enum Status{
+<span class="lineNum">       9 </span>            :     REQUEST=0,
+<span class="lineNum">      10 </span>            :     REQ_FORMAT_ERROR,
+<span class="lineNum">      11 </span>            :     SUCCESS,
+<span class="lineNum">      12 </span>            :     FAILURE,
+<span class="lineNum">      13 </span>            :     PERMISSION_DENEY,
+<span class="lineNum">      14 </span>            :     NET_BROKEN,
+<span class="lineNum">      15 </span>            :     INSERT_ERROR,
+<span class="lineNum">      16 </span>            :     GET_MYSQL_ERROR,
+<span class="lineNum">      17 </span>            :     MODIFY_ERROR,
+<span class="lineNum">      18 </span>            :     DELETE_ERROR,
+<span class="lineNum">      19 </span>            :     QUERY_ERROR
+<span class="lineNum">      20 </span>            :     };
+<span class="lineNum">      21 </span>            : //用户信息
+<span class="lineNum">      22 </span>            : class User
+<a name="23"><span class="lineNum">      23 </span>            : {</a>
+<span class="lineNum">      24 </span>            : public:
+<span class="lineNum">      25 </span><span class="lineCov">         10 :     User():user_id(-1),</span>
+<span class="lineNum">      26 </span>            :             name(NULL),
+<span class="lineNum">      27 </span>            :             address(NULL),
+<span class="lineNum">      28 </span>            :             sex(NULL),
+<span class="lineNum">      29 </span>            :             create_time(NULL),
+<span class="lineNum">      30 </span>            :             fans_num(-1),
+<span class="lineNum">      31 </span>            :             article_num(-1),
+<span class="lineNum">      32 </span>            :             account(NULL),
+<span class="lineNum">      33 </span><span class="lineCov">         10 :             password(NULL)</span>
+<span class="lineNum">      34 </span><span class="lineCov">         10 :     {}</span>
+<span class="lineNum">      35 </span>            :     int user_id;//用户id
+<span class="lineNum">      36 </span>            :     char* name;//昵称
+<span class="lineNum">      37 </span>            :     char* address;//地址
+<span class="lineNum">      38 </span>            :     char* sex;//性别
+<span class="lineNum">      39 </span>            :     char* create_time;//创建日期
+<span class="lineNum">      40 </span>            :     int fans_num;//粉丝数
+<span class="lineNum">      41 </span>            :     int article_num;//文章数
+<span class="lineNum">      42 </span>            :     char* account;//账号
+<span class="lineNum">      43 </span>            :     char* password;//密码
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            :     
+<span class="lineNum">      46 </span>            : };
+<span class="lineNum">      47 </span>            : //用户关系
+<span class="lineNum">      48 </span>            : class User_Relation
+<a name="49"><span class="lineNum">      49 </span>            : {</a>
+<span class="lineNum">      50 </span>            : public:
+<span class="lineNum">      51 </span><span class="lineCov">         14 :     User_Relation():user_id(-1),</span>
+<span class="lineNum">      52 </span>            :                     rel_user_id(-1),
+<span class="lineNum">      53 </span><span class="lineCov">         14 :                     name(NULL)</span>
+<span class="lineNum">      54 </span><span class="lineCov">         14 :     {}</span>
+<span class="lineNum">      55 </span>            :     int user_id;//关注者id
+<span class="lineNum">      56 </span>            :     int rel_user_id;//被关注者id
+<span class="lineNum">      57 </span>            :     char* name;//关注者name
+<span class="lineNum">      58 </span>            : };
+<span class="lineNum">      59 </span>            : //文章分组
+<span class="lineNum">      60 </span>            : class Group
+<a name="61"><span class="lineNum">      61 </span>            : {</a>
+<span class="lineNum">      62 </span>            : public:
+<span class="lineNum">      63 </span><span class="lineCov">          5 :     Group():user_id(-1),</span>
+<span class="lineNum">      64 </span>            :             group_id(-1),
+<span class="lineNum">      65 </span>            :             group_name(NULL),
+<span class="lineNum">      66 </span><span class="lineCov">          5 :             father_group_id(-1)</span>
+<span class="lineNum">      67 </span><span class="lineCov">          5 :     {}</span>
+<span class="lineNum">      68 </span>            :     int user_id;//每个用户都有分组
+<span class="lineNum">      69 </span>            :     int group_id;//组id
+<span class="lineNum">      70 </span>            :     char* group_name;
+<span class="lineNum">      71 </span>            :     int father_group_id;//本组的父组节点
+<span class="lineNum">      72 </span>            : };
+<span class="lineNum">      73 </span>            : //文章
+<span class="lineNum">      74 </span>            : class Article
+<a name="75"><span class="lineNum">      75 </span>            : {</a>
+<span class="lineNum">      76 </span>            : public:
+<span class="lineNum">      77 </span><span class="lineCov">         60 :     Article():art_id(-1),</span>
+<span class="lineNum">      78 </span>            :                 user_id(-1),
+<span class="lineNum">      79 </span>            :                 title(NULL),
+<span class="lineNum">      80 </span>            :                 text(NULL),
+<span class="lineNum">      81 </span>            :                 upvote_num(-1),
+<span class="lineNum">      82 </span>            :                 create_time(NULL),
+<span class="lineNum">      83 </span>            :                 modify_time(NULL),
+<span class="lineNum">      84 </span>            :                 group_id(-1),
+<span class="lineNum">      85 </span><span class="lineCov">         60 :                 type(-1)</span>
+<span class="lineNum">      86 </span><span class="lineCov">         60 :     {}</span>
+<span class="lineNum">      87 </span>            :     int art_id;//文章id
+<span class="lineNum">      88 </span>            :     int user_id;//用户id
+<span class="lineNum">      89 </span>            :     char* title;//文章名
+<span class="lineNum">      90 </span>            :     char* text;//文章内容
+<span class="lineNum">      91 </span>            :     int upvote_num;//点赞数
+<span class="lineNum">      92 </span>            :     char* create_time;//创建时间
+<span class="lineNum">      93 </span>            :     char* modify_time;//最后修改时间
+<span class="lineNum">      94 </span>            :     int group_id;//属于分组
+<span class="lineNum">      95 </span>            :     int type;//类型
+<span class="lineNum">      96 </span>            : };
+<span class="lineNum">      97 </span>            : //评论
+<span class="lineNum">      98 </span>            : class Comment
+<a name="99"><span class="lineNum">      99 </span>            : {</a>
+<span class="lineNum">     100 </span>            : public:
+<span class="lineNum">     101 </span><span class="lineCov">          2 :     Comment():comment_id(-1),</span>
+<span class="lineNum">     102 </span>            :                 art_id(-1),
+<span class="lineNum">     103 </span>            :                 com_user_id(-1),
+<span class="lineNum">     104 </span>            :                 text(NULL),
+<span class="lineNum">     105 </span>            :                 upvote_num(-1),
+<span class="lineNum">     106 </span><span class="lineCov">          2 :                 is_question(-1)</span>
+<span class="lineNum">     107 </span><span class="lineCov">          2 :     {}</span>
+<span class="lineNum">     108 </span>            :     int comment_id;//评论id
+<span class="lineNum">     109 </span>            :     int art_id;//文章id
+<span class="lineNum">     110 </span>            :     int com_user_id;//评论者的id
+<span class="lineNum">     111 </span>            :     char* text;//评论内容
+<span class="lineNum">     112 </span>            :     int upvote_num;//评论获赞数
+<span class="lineNum">     113 </span>            :     int is_question;//回复是否针对问题
+<span class="lineNum">     114 </span>            : };
+<span class="lineNum">     115 </span>            : //收藏
+<span class="lineNum">     116 </span>            : class Collect
+<a name="117"><span class="lineNum">     117 </span>            : {</a>
+<span class="lineNum">     118 </span>            : public:
+<span class="lineNum">     119 </span><span class="lineCov">          9 :     Collect():user_id(-1),</span>
+<span class="lineNum">     120 </span>            :                 collect_art_id(-1),
+<span class="lineNum">     121 </span>            :                 collect_num(-1),
+<span class="lineNum">     122 </span>            :                 art_user_id(-1),
+<span class="lineNum">     123 </span><span class="lineCov">          9 :                 art_name(NULL)</span>
+<span class="lineNum">     124 </span><span class="lineCov">          9 :     {}</span>
+<span class="lineNum">     125 </span>            :     int user_id;//用户id
+<span class="lineNum">     126 </span>            :     int collect_art_id;//被收藏文章/问题id
+<span class="lineNum">     127 </span>            :     int collect_num;//收藏顺序
+<span class="lineNum">     128 </span>            :     int art_user_id;
+<span class="lineNum">     129 </span>            :     char* art_name;
+<span class="lineNum">     130 </span>            : };
+<span class="lineNum">     131 </span>            : 
+<span class="lineNum">     132 </span>            : void mysql_init();
+<span class="lineNum">     133 </span>            : CMysql* get_mysql_handler();
+<span class="lineNum">     134 </span>            : 
+<span class="lineNum">     135 </span>            : User* query_my_user(char* account,char* password);
+<span class="lineNum">     136 </span>            : User* query_user(int user_id);
+<span class="lineNum">     137 </span>            : User* query_user_name(char* name,int* count);
+<span class="lineNum">     138 </span>            : int query_have_user_account(char* account);//不需要返回数组
+<span class="lineNum">     139 </span>            : User_Relation* query_user_rel(int user_id,int* count);
+<span class="lineNum">     140 </span>            : Group* query_group(int user_id,int* count);
+<span class="lineNum">     141 </span>            : Article* query_article_title(int user_id,int* count);
+<span class="lineNum">     142 </span>            : Article* query_article(int art_id);
+<span class="lineNum">     143 </span>            : Article* query_article_name(char* name,int* count);
+<span class="lineNum">     144 </span>            : Article* query_article_id(int user_id);
+<span class="lineNum">     145 </span>            : Comment* query_comment(int art_id,int* count);
+<span class="lineNum">     146 </span>            : Collect* query_collect(int user_id,int* count);
+<span class="lineNum">     147 </span>            : Group* query_group_id(int user_id);
+<span class="lineNum">     148 </span>            : 
+<span class="lineNum">     149 </span>            : Status query_have_article_in(int group_id,int user_id);
+<span class="lineNum">     150 </span>            : Status query_have_group_in(int user_id,int group_id);
+<span class="lineNum">     151 </span>            : Status query_have_group(int group,int user);
+<span class="lineNum">     152 </span>            : Status query_user_rel_exist(User_Relation* rel);
+<span class="lineNum">     153 </span>            : Status query_user_col_exist(Collect* col);
+<span class="lineNum">     154 </span>            : Status add_art_upvote(int art_id);
+<span class="lineNum">     155 </span>            : 
+<span class="lineNum">     156 </span>            : Article* query_article_bytype(int type,int *count);
+<span class="lineNum">     157 </span>            : Article* query_article_bynow(int *count);
+<span class="lineNum">     158 </span>            : Article* query_article_bymonth(int *count);
+<span class="lineNum">     159 </span>            : Article* query_article_byweek(int *count);
+<span class="lineNum">     160 </span>            : 
+<span class="lineNum">     161 </span>            : Status insert_user(User *p);
+<span class="lineNum">     162 </span>            : Status insert_user_rel(User_Relation *user_relation);
+<span class="lineNum">     163 </span>            : Status insert_group(Group *group);
+<span class="lineNum">     164 </span>            : Status insert_article(Article *article);
+<span class="lineNum">     165 </span>            : Status insert_comment(Comment *comment);
+<span class="lineNum">     166 </span>            : Status insert_collect(Collect *collect);
+<span class="lineNum">     167 </span>            : 
+<span class="lineNum">     168 </span>            : Status modify_user(User *user);
+<span class="lineNum">     169 </span>            : Status modify_user_rel(User_Relation *user_relation);
+<span class="lineNum">     170 </span>            : Status modify_group(Group *group);
+<span class="lineNum">     171 </span>            : Status modify_article(Article *article);
+<span class="lineNum">     172 </span>            : Status modify_comment(Comment *comment);
+<span class="lineNum">     173 </span>            : Status modify_collect(Collect *collect);
+<span class="lineNum">     174 </span>            : Status modify_article_group(int art_id,int group_id);
+<span class="lineNum">     175 </span>            : 
+<span class="lineNum">     176 </span>            : 
+<span class="lineNum">     177 </span>            : Status delete_user(int user_id);
+<span class="lineNum">     178 </span>            : Status delete_user_rel(int user_id,int user_rel_id);
+<span class="lineNum">     179 </span>            : Status delete_all_user_rel(int user_id);
+<span class="lineNum">     180 </span>            : Status delete_group(int user_id,int group_id);
+<span class="lineNum">     181 </span>            : Status delete_all_group(int user_id);
+<span class="lineNum">     182 </span>            : Status delete_article(int art_id);
+<span class="lineNum">     183 </span>            : Status delete_all_article(int user_id);
+<span class="lineNum">     184 </span>            : Status delete_comment(int comment_id);
+<span class="lineNum">     185 </span>            : Status delete_comment_all(int art_id);
+<span class="lineNum">     186 </span>            : Status delete_collect(int user_id,int art_id);
+<span class="lineNum">     187 </span>            : Status delete_collect_all(int user_id);
+<span class="lineNum">     188 </span>            : #endif
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.13</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

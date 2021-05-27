@@ -11,7 +11,7 @@ QueryResult::QueryResult(MYSQL_RES* result, uint64_t rowCount, uint32_t fieldCou
 
     for (uint32_t i = 0; i < m_FieldCount; i++)
     {
-        //TODO: Õâ¸öµØ·½Òª²»ÒªÅÐ¶ÏÎªNULL£¿
+        //TODO: ï¿½ï¿½ï¿½ï¿½Ø·ï¿½Òªï¿½ï¿½Òªï¿½Ð¶ï¿½ÎªNULLï¿½ï¿½
         if (fields[i].name != NULL)
         {
             m_FieldNames[i] = fields[i].name;
@@ -48,10 +48,10 @@ bool QueryResult::nextRow()
 
     unsigned long int* ulFieldLength;
     ulFieldLength = mysql_fetch_lengths(m_Result);
-    //·µ»Ø½á¹û¼¯µÄµ±Ç°ÐÐµÄÃ¿Ò»ÁÐµÄÊý¾Ý³¤¶È
+    //ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Ç°ï¿½Ðµï¿½Ã¿Ò»ï¿½Ðµï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
     for (uint32_t i = 0; i < m_FieldCount; i++)
     {
-        if (row[i] == NULL)//ÕâÒ»ÐÐµÄiÕâÁÐ£¬µ¥Ôª
+        if (row[i] == NULL)//ï¿½ï¿½Ò»ï¿½Ðµï¿½iï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½Ôª
         {
             m_CurrentRow[i].m_bNULL = true;
             m_CurrentRow[i].setValue("", 0);
@@ -60,6 +60,7 @@ bool QueryResult::nextRow()
         {
             m_CurrentRow[i].m_bNULL = false;
             m_CurrentRow[i].setValue(row[i], ulFieldLength[i]);
+            //printf("row[%d] = %s",i,row[i]);è°ƒè¯•ç”¨
         }
 
         m_CurrentRow[i].setName(m_FieldNames[i]);
