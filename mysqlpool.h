@@ -4,7 +4,20 @@
 #include<stdio.h>
 using namespace std;
 class CMysql;
-enum Status{REQUEST=0,REQ_FORMAT_ERROR,SUCCESS,FAILURE,PERMISSION_DENEY,NET_BROKEN,INSERT_ERROR,GET_MYSQL_ERROR,MODIFY_ERROR,DELETE_ERROR,QUERY_ERROR};
+//状态，目前只用到REQUEST,SUCCESS,FAILURE，其他以后可以用
+enum Status{
+    REQUEST=0,
+    REQ_FORMAT_ERROR,
+    SUCCESS,
+    FAILURE,
+    PERMISSION_DENEY,
+    NET_BROKEN,
+    INSERT_ERROR,
+    GET_MYSQL_ERROR,
+    MODIFY_ERROR,
+    DELETE_ERROR,
+    QUERY_ERROR
+    };
 //用户信息
 class User
 {
@@ -133,7 +146,7 @@ Comment* query_comment(int art_id,int* count);
 Collect* query_collect(int user_id,int* count);
 Group* query_group_id(int user_id);
 
-Status query_have_article_in(int group_id);
+Status query_have_article_in(int group_id,int user_id);
 Status query_have_group_in(int user_id,int group_id);
 Status query_have_group(int group,int user);
 Status query_user_rel_exist(User_Relation* rel);

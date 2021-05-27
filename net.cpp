@@ -1,3 +1,9 @@
+//function 客户端测试，能接收网络传输的json
+//comment 此函数能跑通，qt就能接收数据
+//date 2021.5.27
+//author @huwei
+//other 
+
 #include<stdio.h>
 #include<sys/types.h>
 #include<sys/socket.h>

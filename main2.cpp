@@ -1,6 +1,8 @@
-
-//先把一个简单的协议完成，能够和前端通信，然后再上层
-
+//function 这是一个简单的C/S模式的论坛与博客系统
+//comment 此文件是只支持单用户的用于调试的程序，正式程序是main3.cpp，线程不便调试
+//date 2021.5.27
+//author @huwei
+//other 
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<netinet/in.h>
@@ -19,36 +21,69 @@
 #include"mysqlpool.h"
 #include"addjson.h"
 #include<linux/sockios.h>
-#define CONTENT_SIZE 1024*1024
 #define PROTO_SIZE 12
 #define EPOLLNUM 1024
+#define MAX_EVENT_NUMBER 1024 //event数组大小
+#define BUFFER_SIZE 1024*1024 //每个用户分配的buffer大小
+
 #define trans4(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))|((x[2]<<16)&(0x00ff0000))|((x[3]<<24)&(0xff000000))//
 #define trans2(x) ((x[0])&(0x000000ff))|((x[1]<<8)&(0x0000ff00))//
 
-enum op_type{login_t=0,insert_user_t,insert_article_t,insert_group_t,insert_collect_t,insert_comment_t,insert_user_rel_t,
-             query_user_t,query_user_list_t,query_user_rel_t,query_user_rel_simple_t,query_group_t,query_group_list_t,
-             query_article_t,query_article_title_t,query_article_list_t,query_comment_t,query_comment_list_t,query_collect_t,query_collect_simple_t,
-             modify_user_t,modify_article_t,modify_group_t,modify_collect_t,modify_user_rel_t,modify_comment_t,
-             delete_user_t,delete_user_rel_t,delete_group_t,delete_article_t,delete_article_list_t,delete_comment_t,delete_comment_list_t,delete_collect_t,delete_collect_list_t,
-             test,add_art_upvote_t,query_article_bytype_t,query_art_bynow_t,query_art_bymonth_t,query_art_byweek_t,query_user_id_t,
-             query_user_name_t,query_article_id_t,query_article_name_t,modify_article_group_t};
+enum op_type{
+    login_t=0,//登录
+    insert_user_t,//插入用户
+    insert_article_t,//
+    insert_group_t,//
+    insert_collect_t,//
+    insert_comment_t,//
+    insert_user_rel_t,//
+    query_user_t,//
+    query_user_list_t,//
+    query_user_rel_t,//
+    query_user_rel_simple_t,//
+    query_group_t,//
+    query_group_list_t,//
+    query_article_t,//
+    query_article_title_t,//
+    query_article_list_t,//
+    query_comment_t,//
+    query_comment_list_t,//
+    query_collect_t,//
+    query_collect_simple_t,//
+    modify_user_t,//
+    modify_article_t,//
+    modify_group_t,//
+    modify_collect_t,//
+    modify_user_rel_t,//
+    modify_comment_t,//
+    delete_user_t,//
+    delete_user_rel_t,//
+    delete_group_t,//
+    delete_article_t,//
+    delete_article_list_t,//
+    delete_comment_t,//
+    delete_comment_list_t,//
+    delete_collect_t,//
+    delete_collect_list_t,//
+    test,//
+    add_art_upvote_t,//
+    query_article_bytype_t,//
+    query_art_bynow_t,//
+    query_art_bymonth_t,//
+    query_art_byweek_t,//
+    query_user_id_t,//
+    query_user_name_t,//
+    query_article_id_t,//
+    query_article_name_t,//
+    modify_article_group_t//
+    };
 //type还要加一些如login
 
-#define MAX_EVENT_NUMBER 1024
-#define BUFFER_SIZE 1024*1024
-char buf[BUFFER_SIZE];
+char buf[BUFFER_SIZE];//main2版本方便调试，简单用全局buffer，仅支持单人
 int len=0;//当前读到buf长度
 int length=PROTO_SIZE;//总请求长度
-/*
-void add_epoll_fd(int client_fd)
-{
-    event.data.fd=clientfd;
-    event.events=EPOLLIN;
-    epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd,&event);//添加到epoll
-    //http 连接
-    printf("http connect success\n");
-}
-*/
+
+//设计未完成，在main3中完成了
 class thread
 {
 public:
@@ -68,6 +103,8 @@ int setnonblocking(int fd)
     fcntl(fd,F_SETFL,new_option);
     return old_option;
 }
+//此add_fd是ET模式，此项目用lt，不适用较难的协议设计
+/*
 void addfd(int epollfd,int fd)
 {
     epoll_event event;
@@ -76,11 +113,15 @@ void addfd(int epollfd,int fd)
     epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
     setnonblocking(fd);
 }
+*/
+//重要的结构体，用于发送响应，协议+json数据，请求这么放也可以，节省内存，但多次new、delete
 struct Result
 {
     char* json;
     char* protocol;
 };
+
+/* 并未用过，因为在et函数中，已经获取了请求。这是最初的设计
 char* get_request(int fd)//获取请求并处理,不读到PROTO_SIZE不返回的
 {
     char* buffer=new char[1000];
@@ -103,6 +144,8 @@ char* get_request(int fd)//获取请求并处理,不读到PROTO_SIZE不返回的
         buffer[PROTO_SIZE]='\0';
     return buffer;
 }
+*/
+//用于封装响应，参数：json数据、响应状态、响应类型
 Result* packet_response(char *str,int status,int type)
 {
     //返回肯定是PROTO_SIZE+strlen（json）,json中没有\0
@@ -146,19 +189,18 @@ Result* packet_response(char *str,int status,int type)
     return res;
 }
 
-//处理请求
-//buffer表示传来的请求，
+//处理请求，buffer表示传来的请求，关键处理函数
 struct Result* process_request(char* buffer)
 {
     int length=trans4((buffer));
     int status=trans2((buffer+4));
     int type=trans2((buffer+6));
-    unsigned int CRC=trans4((buffer));
+    unsigned int CRC=trans4((buffer));//CRC未实现
     char* json=buffer+PROTO_SIZE;
     printf("Request:             length=%d,status=%d,type=%d,CRC=%d,json=%s\n",length,status,type,CRC,json);
     //int ret=assert_crc(buffer,CRC);crc检验
     struct Result* response=NULL;
-    int state=0;
+    int state=0;//状态
     char* str=NULL;
     int len_t;
     if(status==REQUEST)
@@ -205,20 +247,6 @@ struct Result* process_request(char* buffer)
                 else
                     state=FAILURE;
                 str=struct2json(result,USER_REL,len_t);
-                delete[] result;
-                response=packet_response(str,state,type);
-                break;
-            }
-            case query_collect_t:
-            {
-                Collect* collect=(Collect*)json2struct(json,COLLECT,&len_t);
-                Collect* result=query_collect(collect->user_id,&len_t);
-                delete collect;
-                if(result!=NULL)
-                    state=SUCCESS;
-                else
-                    state=FAILURE;
-                str=struct2json(result,COLLECT,len_t);
                 delete[] result;
                 response=packet_response(str,state,type);
                 break;
@@ -280,6 +308,20 @@ struct Result* process_request(char* buffer)
                 response=packet_response(str,state,type);
                 break;
             }
+            case query_collect_t:
+            {
+                Collect* collect=(Collect*)json2struct(json,COLLECT,&len_t);
+                Collect* result=query_collect(collect->user_id,&len_t);
+                delete collect;
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=FAILURE;
+                str=struct2json(result,COLLECT,len_t);
+                delete[] result;
+                response=packet_response(str,state,type);
+                break;
+            }
             case query_user_rel_simple_t:
             {
                 User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
@@ -296,105 +338,6 @@ struct Result* process_request(char* buffer)
                 delete col;    
                 break;
             }
-            case insert_user_rel_t:
-            {
-                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
-                state=insert_user_rel(rel);
-                response=packet_response(NULL,state,type);
-                delete rel;
-                break;
-            }
-            case delete_user_rel_t:
-            {
-                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
-                state=delete_user_rel(rel->user_id,rel->rel_user_id);
-                response=packet_response(NULL,state,type);
-                delete rel;
-                break;
-            }
-            case insert_collect_t:
-            {
-                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
-                state=insert_collect(col);
-                if(state!=SUCCESS)
-                    state=FAILURE;
-                response=packet_response(NULL,state,type);
-                delete col;    
-                break;
-            }
-            case delete_collect_t:
-            {
-                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
-                state=delete_collect(col->user_id,col->collect_art_id);
-                if(state!=SUCCESS)
-                    state=FAILURE;
-                response=packet_response(NULL,state,type);
-                delete col;    
-                break;
-            }
-            case add_art_upvote_t:
-            {
-                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
-                state=add_art_upvote(article->art_id);
-                response=packet_response(NULL,state,type);
-                delete article;
-                break;
-            }
-            case query_article_bytype_t:
-            {
-                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
-                if(article!=NULL)
-                    article=query_article_bytype(article->type,&len_t);
-                else
-                    article=query_article_bytype(0,&len_t);
-                if(article==NULL)
-                    state=SUCCESS;
-                else
-                    state=SUCCESS;
-                char* str=struct2json(article,ARTICLE,len_t);
-                response=packet_response(str,state,type);
-                delete article;
-                break;
-            }
-            case query_art_bynow_t:
-            {
-                Article* article=NULL;
-                article=query_article_bynow(&len_t);
-                if(article==NULL)
-                    state=SUCCESS;
-                else 
-                    state=SUCCESS;
-                char* str=struct2json(article,ARTICLE,len_t);
-                response=packet_response(str,state,type);
-                delete article;
-                break;
-            }
-            case query_art_bymonth_t:
-            {
-                Article* article=NULL;
-                article=query_article_bymonth(&len_t);
-                if(article==NULL)
-                    state=SUCCESS;
-                else 
-                    state=SUCCESS;
-                char* str=struct2json(article,ARTICLE,len_t);
-                response=packet_response(str,state,type);
-                delete article;
-                break;
-            }
-            case query_art_byweek_t:
-            {
-                Article* article=NULL;
-                article=query_article_byweek(&len_t);
-                if(article==NULL)
-                    state=SUCCESS;
-                else 
-                    state=SUCCESS;
-                char* str=struct2json(article,ARTICLE,len_t);
-                response=packet_response(str,state,type);
-                delete article;
-                break;
-            }
             case insert_user_t:
             {
                 //printf("json=%s\n",json);
@@ -407,6 +350,40 @@ struct Result* process_request(char* buffer)
                 delete user;
                 printf("state=%d\n",state);
                 response=packet_response(NULL,state,type);
+                break;
+            }
+            case insert_user_rel_t:
+            {
+                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
+                state=insert_user_rel(rel);
+                response=packet_response(NULL,state,type);
+                delete rel;
+                break;
+            }
+            case insert_group_t:
+            {
+                //2次查询，为了group_id，由于group_id未在数据库中设置外键，必须手动获取
+                Group* group=(Group*)json2struct(json,GROUP,&len_t);
+                state=insert_group(group);
+                if(state!=SUCCESS)
+                {
+                    delete group;
+                    printf("state=%d\n",state);
+                    response=packet_response(NULL,FAILURE,type);
+                    break;
+                }
+                Group* result=NULL;
+                result=query_group_id(group->user_id);
+                if(result!=NULL)
+                    state=SUCCESS;
+                else
+                    state=SUCCESS;
+                str=struct2json(result,GROUP,1);
+                if(result!=NULL)
+                    delete result;
+                delete group;
+                printf("state=%d\n",state);
+                response=packet_response(str,state,type);
                 break;
             }
             case insert_article_t:
@@ -439,6 +416,16 @@ struct Result* process_request(char* buffer)
                 response=packet_response(NULL,state,type);
                 break;
             }
+            case insert_collect_t:
+            {
+                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
+                state=insert_collect(col);
+                if(state!=SUCCESS)
+                    state=FAILURE;
+                response=packet_response(NULL,state,type);
+                delete col;    
+                break;
+            }
             case modify_user_t:
             {
                 User* user=NULL;
@@ -446,79 +433,6 @@ struct Result* process_request(char* buffer)
                 state=modify_user(user);//查询然后strcut2json 然后协议
                 response=packet_response(NULL,state,type);
                 delete user;
-                break;
-            }
-            case modify_article_t:
-            {
-                Article* article=NULL;
-                article=(Article*)json2struct(json,ARTICLE,&len_t);
-                state=modify_article(article);//查询然后strcut2json 然后协议
-                if(state!=SUCCESS)
-                    state=FAILURE;
-                response=packet_response(NULL,state,type);
-                delete article;
-                break;
-            }
-            case delete_article_t:
-            {
-                Article* article=NULL;
-                article=(Article*)json2struct(json,ARTICLE,&len_t);
-                state=delete_article(article->art_id);
-                response=packet_response(NULL,state,type);
-                break;
-            }
-            case delete_user_t:
-            {
-                User* user=new User;
-                user=(User*)json2struct(json,USER,&len_t);
-                state=delete_user(user->user_id);
-                response=packet_response(NULL,state,type);
-            }
-            case insert_group_t:
-            {
-                //2次查询，为了group_id
-                Group* group=(Group*)json2struct(json,GROUP,&len_t);
-                state=insert_group(group);
-                if(state!=SUCCESS)
-                {
-                    delete group;
-                    printf("state=%d\n",state);
-                    response=packet_response(NULL,FAILURE,type);
-                    break;
-                }
-                Group* result=NULL;
-                result=query_group_id(group->user_id);
-                if(result!=NULL)
-                    state=SUCCESS;
-                else
-                    state=SUCCESS;
-                str=struct2json(result,GROUP,1);
-                if(result!=NULL)
-                    delete result;
-                delete group;
-                printf("state=%d\n",state);
-                response=packet_response(str,state,type);
-                break;
-            }
-            case delete_group_t:
-            {
-                //1、需要将其下的文章和分组转移 2、递归删除其下文章、分组 3、返回错误
-                Group* group=(Group*)json2struct(json,GROUP,&len_t);
-                state=query_have_article_in(group->group_id);
-                printf("state1=%d\n",state);
-                int state2=query_have_group_in(group->user_id,group->group_id);
-                printf("state2=%d\n",state2);
-                if(state==SUCCESS&&state2==SUCCESS)
-                {
-                    state=delete_group(group->user_id,group->group_id);
-                    if(state!=SUCCESS)
-                        state=FAILURE;
-                    printf("state3=%d\n",state);
-                }
-                else
-                    state=FAILURE;
-                delete group;
-                response=packet_response(NULL,state,type);
                 break;
             }
             case modify_group_t:
@@ -556,9 +470,151 @@ struct Result* process_request(char* buffer)
                 delete article;
                 break;
             }
+            case modify_article_t:
+            {
+                Article* article=NULL;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=modify_article(article);//查询然后strcut2json 然后协议
+                if(state!=SUCCESS)
+                    state=FAILURE;
+                response=packet_response(NULL,state,type);
+                delete article;
+                break;
+            }
+            case delete_user_t:
+            {
+                User* user=new User;
+                user=(User*)json2struct(json,USER,&len_t);
+                state=delete_user(user->user_id);
+                response=packet_response(NULL,state,type);
+            }
+            case delete_user_rel_t:
+            {
+                User_Relation* rel=(User_Relation*)json2struct(json,USER_REL,&len_t);
+                state=delete_user_rel(rel->user_id,rel->rel_user_id);
+                response=packet_response(NULL,state,type);
+                delete rel;
+                break;
+            }
+            case delete_group_t:
+            {
+                //1、需要将其下的文章和分组转移 2、递归删除其下文章、分组 3、返回错误
+                Group* group=(Group*)json2struct(json,GROUP,&len_t);
+                state=query_have_article_in(group->group_id,group->user_id);
+                printf("state1=%d\n",state);
+                int state2=query_have_group_in(group->user_id,group->group_id);
+                printf("state2=%d\n",state2);
+                if(state==SUCCESS&&state2==SUCCESS)
+                {
+                    state=delete_group(group->user_id,group->group_id);
+                    if(state!=SUCCESS)
+                        state=FAILURE;
+                    printf("state3=%d\n",state);
+                }
+                else
+                    state=FAILURE;
+                delete group;
+                response=packet_response(NULL,state,type);
+                break;
+            }
+            case delete_article_t:
+            {
+                Article* article=NULL;
+                article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=delete_article(article->art_id);
+                response=packet_response(NULL,state,type);
+                break;
+            }
+            case delete_comment_t:
+            {
+                Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
+                state=delete_comment(comment->comment_id);
+                if(state!=SUCCESS)
+                    state=FAILURE;
+                response=packet_response(NULL,state,type);
+                break;
+            }
+            case delete_collect_t:
+            {
+                Collect* col=(Collect*)json2struct(json,COLLECT,&len_t);
+                state=delete_collect(col->user_id,col->collect_art_id);
+                if(state!=SUCCESS)
+                    state=FAILURE;
+                response=packet_response(NULL,state,type);
+                delete col;    
+                break;
+            }
+            case add_art_upvote_t:
+            {
+                //点赞
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                state=add_art_upvote(article->art_id);
+                response=packet_response(NULL,state,type);
+                delete article;
+                break;
+            }
+            case query_article_bytype_t:
+            {
+                //按类型查询全部文章
+                Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
+                if(article!=NULL)
+                    article=query_article_bytype(article->type,&len_t);
+                else
+                    article=query_article_bytype(0,&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_bynow_t:
+            {
+                //最近1天文章
+                Article* article=NULL;
+                article=query_article_bynow(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_bymonth_t:
+            {
+                //最近一月文章
+                Article* article=NULL;
+                article=query_article_bymonth(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
+            case query_art_byweek_t:
+            {
+                //最近一周文章
+                Article* article=NULL;
+                article=query_article_byweek(&len_t);
+                if(article==NULL)
+                    state=SUCCESS;
+                else 
+                    state=SUCCESS;
+                char* str=struct2json(article,ARTICLE,len_t);
+                response=packet_response(str,state,type);
+                delete article;
+                break;
+            }
             case query_user_id_t:
             {
-                //查询用户id 返回用户信息
+                //按用户id查
                 User* user=(User*)json2struct(json,USER,&len_t);
                 int id=user->user_id;
                 User* result=query_user(id);//查询然后strcut2json 然后协议
@@ -605,7 +661,6 @@ struct Result* process_request(char* buffer)
             case query_article_name_t:
             {
                 //查询文章名
-                //查询文章id 返回文章信息，此处可以重写一个，就不用返回文章，节省网络资源，现在也行
                 Article* article=(Article*)json2struct(json,ARTICLE,&len_t);
                 Article* result=query_article_name(article->title,&len_t);
                 delete article;
@@ -618,17 +673,9 @@ struct Result* process_request(char* buffer)
                 response=packet_response(str,state,type);
                 break;
             }
-            case delete_comment_t:
-            {
-                Comment* comment=(Comment*)json2struct(json,COMMENT,&len_t);
-                state=delete_comment(comment->comment_id);
-                if(state!=SUCCESS)
-                    state=FAILURE;
-                response=packet_response(NULL,state,type);
-                break;
-            }
             default:
             {
+                //其他请求，返回错误
                 response=packet_response(NULL,FAILURE,0);
                 break;
             }
@@ -639,6 +686,7 @@ struct Result* process_request(char* buffer)
     }
     return response;
 }
+//发送响应
 int send_response(int fd,struct Result *result)
 {
     //发送的时候没有带\0,可能有错
@@ -690,7 +738,7 @@ int send_response(int fd,struct Result *result)
             }
         }
     }
-    /* 查看输出缓存区数目
+    /* 查看输出缓存区数目，debug
     int value;
     ioctl(fd, SIOCOUTQ, &value);
     printf("rest %d wait for send\n",value);
@@ -717,8 +765,8 @@ void addfd(int epollfd,int fd,bool enable_et)
     epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&event);
     setnoblocking(fd);
 }
-
-void et(epoll_event* events,int number,int epollfd,int listenfd)
+//epoll的处理函数，其实是lt模式,不象处理et模式下协议设计了
+void lt(epoll_event* events,int number,int epollfd,int listenfd)
 {
     for(int i=0;i<number;i++)
     {
@@ -728,6 +776,8 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
             struct sockaddr_in client_address;
             socklen_t client_addresslength=sizeof(client_address);
             int connfd=accept(listenfd,(struct sockaddr*)&client_address,&client_addresslength);
+            
+            //调试
             struct  sockaddr_in sa;
             socklen_t len = sizeof(sa);
             if(!getpeername(connfd, (struct sockaddr *)&sa, &len))
@@ -735,9 +785,10 @@ void et(epoll_event* events,int number,int epollfd,int listenfd)
                 printf( "对方IP：%s \n", inet_ntoa(sa.sin_addr));
                 printf( "对方PORT：%d \n", ntohs(sa.sin_port));
             }
+
             addfd(epollfd,connfd,true);
         }
-        else if(events[i].events&EPOLLIN)
+        else if(events[i].events&EPOLLIN)//请求到达
         {
             printf("event trigger once\n");
             while(len<length)
@@ -799,7 +850,7 @@ int main(int argc,char* argv[]){
     inet_pton(AF_INET,ip,&address.sin_addr);
     address.sin_port=htons(port);
     int listenfd=socket(PF_INET,SOCK_STREAM,0);
-    /* set tcpnodelay
+    /* set tcpnodelay，调试
     const char chOpt=1;
     int nErr=setsockopt(listenfd,IPPROTO_TCP,TCP_NODELAY,&chOpt,sizeof(char));
     if(nErr==-1)
@@ -825,9 +876,19 @@ int main(int argc,char* argv[]){
             printf("epoll failure\n");
             break;
         }
-        //lt(events,ret,epollfd,listenfd);
-        et(events,ret,epollfd,listenfd);
+        lt(events,ret,epollfd,listenfd);
     }
     close(listenfd);
     return 0;
 }
+//最终黑盒数据
+/*
+                       4字节位
+|                                                  |
+------------ -------------- ------------ -----------
+                        长度
+          状态                        操作类型
+                        CRC(针对json+上述4项)                        
+
+
+*/

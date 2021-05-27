@@ -1,3 +1,8 @@
+//function 这是一个简单的B/S模式的论坛与博客系统
+//comment 此文件是一开始准备做Web应用的程序，正式程序是main3.cpp，是C/S模式，由于不善用前端，而放弃Web
+//date 2021.4.1
+//author @huwei
+//other 以后可以扩展，此程序已经能在web端接收页面
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<netinet/in.h>

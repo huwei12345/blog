@@ -1,10 +1,10 @@
-main:main2.o mysqlpool.o Field.o QueryResult.o CMysql.o MysqlManager.o addjson.o
-	g++ -Wall -g -fprofile-arcs -ftest-coverage -o main main2.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o addjson.o cJSON.c -lpthread -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+main:main3.o mysqlpool.o Field.o QueryResult.o CMysql.o MysqlManager.o addjson.o
+	g++ -Wall -g -fprofile-arcs -ftest-coverage -o main main3.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o addjson.o cJSON.c -lpthread -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c -o test_main.o test_main.c
 	gcc -Wall -g -fprofile-arcs -ftest-coverage -c -o xtest.o xtest.c
 	g++ -Wall -g -o test xtest.o test_main.o mysqlpool.o CMysql.o Field.o QueryResult.o MysqlManager.o addjson.o cJSON.c -lgcov -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
-main2.o:
-	g++ -Wall -g -fprofile-arcs -ftest-coverage -c main2.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
+main3.o:
+	g++ -Wall -g -fprofile-arcs -ftest-coverage -c main3.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 mysqlpool.o:
 	g++ -Wall -g -fprofile-arcs -ftest-coverage -c mysqlpool.cpp -I /usr/include/mysql -L /usr/lib64/mysql -lmysqlclient
 Field.o:
@@ -28,10 +28,10 @@ test: def
 	./test --fork
 
 check:
-	valgrind --leak-check=full -v ./main2
+	valgrind --leak-check=full -v ./main
 
 lcov:
-	lcov -d ./ -t 'main2' -o 'main2.info' -b . -c
-	genhtml -o main2_web main2.info
+	lcov -d ./ -t 'main3' -o 'main3.info' -b . -c
+	genhtml -o main3_web main3.info
 
 .PHONY: def clean ut test

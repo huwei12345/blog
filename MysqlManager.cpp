@@ -1,7 +1,6 @@
 #include "MysqlManager.h"
-#include <sstream>
-//#include "MysqlThrdMgr.h"
-//不太需要，表太多了，要创建很多张表，暂时不用
+// 此文件没用到，但是可以使用，在项目还没有数据库的时候初始化数据库
+/*
 CMysqlManager::CMysqlManager(void)
 {
 	//TODO: m_strCharactSet���Է��ڳ�ʼ���б��г�ʼ��
@@ -255,3 +254,4 @@ bool CMysqlManager::createTable(const STableInfo& table)
 	//LOGE("Create table error, sql: %s", ss.str().c_str());
 	return false;
 }
+*/

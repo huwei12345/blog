@@ -2,6 +2,7 @@
 #include<string.h>
 #include"addpro.h"
 //为json内容添加协议前缀
+//仅测试用，正式程序没用
 //最终黑盒数据
 /*
                        4字节位

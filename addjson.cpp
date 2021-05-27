@@ -514,7 +514,7 @@ void* json2struct(char* json_str,type type,int *size)
     }
     return NULL;
 }
-
+/*
 void test_s2j()
 {
     char* str=NULL;
@@ -594,8 +594,6 @@ void test_j2s()
     User* p=(User*)json2struct(temp,USER,&len_t);
     printf("user_id=%d name=%s address=%s sex=%s ctime=%s art_num=%d fans_num=%d\n",p->user_id,p->name,p->address,p->sex,p->create_time,p->article_num,p->fans_num);
 }
-
-/*
 int main()
 {
     test_s2j();

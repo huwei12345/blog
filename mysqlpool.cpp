@@ -1250,11 +1250,11 @@ Status delete_all_user_rel(int user_id)
     delete[] str;
     return SUCCESS;
 }
-Status query_have_article_in(int group_id)
+Status query_have_article_in(int group_id,int user_id)
 {
     QueryResult* res=NULL;
     char* str=new char[200];
-    snprintf(str,200,"SELECT 1 FROM article_t WHERE group_id=%d;",group_id);
+    snprintf(str,200,"SELECT 1 FROM article_t WHERE group_id=%d and user_id=%d;",group_id,user_id);
     int sql_index=0;
     CMysql* mysql=get_mysql_handler(&sql_index);
     if(mysql==NULL)
